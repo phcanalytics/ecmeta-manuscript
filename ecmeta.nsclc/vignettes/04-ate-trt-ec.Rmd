@@ -1,0 +1,296 @@
+---
+title: "Estimation of average treatment effects: RCT experimental vs external control"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: TRUE 
+    self_contained: TRUE
+pkgdown: 
+  as_is: false
+---
+
+```{r chunkSet, include = FALSE}
+knitr::opts_chunk$set(fig.height = 5, fig.width = 8, cache = FALSE)
+```
+
+# Setup
+The objectives of this analysis is to estimate average treatment effects (ATE) using the propensity score methods assessed in `vignette("03-balance")`. We compare the experimental arm from the randomized clinical trials (RCTs) to the external control. While the primary treatment effect metric is the hazard ratio, we report survivor functions as well. The following `R` packages, settings, and global variables are used.
+
+```{r setup, warning = FALSE, message = FALSE}
+# R packages
+library("dplyr")
+library("ecmeta.nsclc")
+library("ggplot2")
+library("kableExtra")
+library("pins")
+library("purrr")
+library("survival")
+
+# Settings
+theme_set(theme_bw())
+
+# Global variables
+RESPONSE <- "Surv(os_days, os_status)"
+SURV_FORMULA <- as.formula(paste0(RESPONSE, " ~ treat"))
+ID <-"patient_id"
+GRP_ID <- "analysis_num"
+```
+
+# Data 
+All analyses are based on the preprocessed data we have used previously.
+
+```{r, data}
+ec_rct <- pin_get("nsclc") %>%
+  preprocess() 
+
+ec_rct1 <- ec_rct %>%
+  filter(!(source_type == "RCT" & arm_type == "Comparator"))
+```
+
+However, to ensure that outcomes did not influence our propensity score models, our prior analyses did not use any outcome data. We add the outcomes data here so that we can estimate survival models.
+
+```{r yList} 
+y_list <- ec_rct1 %>%
+  select(patient_id, analysis_num, os_days, os_status) %>%
+  group_by(analysis_num) %>%
+  group_split() 
+```
+
+# RCT benchmarks
+We first obtain RCT datasets for each of the analyses so that we can generate hazard ratio benchmarks for our external control analyses.
+
+```{r, rctData}
+rct_list <- ec_rct[ec_rct$source_type == "RCT", ] %>%
+  group_by(analysis_num) %>%
+  group_split()
+```
+
+Hazard ratios are estimated with Cox models that include a single covariate for treatment assignment. We first estimate log hazard ratios (which we will need for our meta-analytic model) and then transform them to hazard ratios for presentation.
+
+```{r, rctHr}
+# Estimate log hazard ratios
+rct_loghr <- map(rct_list, function(x) {
+  fit <- coxph(SURV_FORMULA, data = x)
+  loghr <- c(coef(fit), sqrt(vcov(fit)), confint(fit))
+  tibble(estimate = loghr[1],
+         se = loghr[2],
+         lower = loghr[3],
+         upper = loghr[4])
+}) %>%
+  bind_rows(.id = "analysis_num") %>% 
+  mutate(analysis_num = as.integer(analysis_num))
+
+# Transform to hazard ratios
+rct_hr <- rct_loghr %>%
+  mutate(across(c(estimate, lower, upper), .fns = exp))
+```
+
+We also generate Kaplan-Meier estimates stratified by treatment assignment. 
+
+```{r, rctSurv, fig.height = 10}
+rct_surv <- map(rct_list, function(x) {
+  km <- survfit(SURV_FORMULA, data = x)
+  marginal_survival(km)
+}) %>%
+  rbind_list(id = "analysis_num", integer_id = TRUE)
+autoplot(rct_surv)
+```
+
+# Primary estimates
+Next we compare the experimental arm from the RCTs to the external controls. Our primary estimates are based on Cox models containing a single covariate for treatment assignment that are weighted  using IPTW-ATT weights.
+
+## Treatment effect estimation
+We load in information for each of the 14 analyses includes the propensity score weights we estimated in `vignette("03-balance")`.
+
+```{r analysis}
+analysis <- readRDS("analysis-balance.rds")
+```
+
+We use the `surv_ate()` function to estimate log hazard ratios and survivor functions. We iterate over each of the 14 "groups" with `map_surv_ate()`. Standard errors for the hazard ratios are clustered by patient ID and estimates are pooled across imputations using Rubin's rule. 
+
+```{r primaryAte}
+primary_psw <- map(analysis$psweight, function (x) x[x$method == "iptw_att_trim", ])
+primary_ate <- map_surv_ate(primary_psw, ydata_list = y_list,
+                            response = RESPONSE, id = ID,
+                            grp_id = GRP_ID,
+                            integer_grp_id = TRUE)
+```
+
+## Hazard ratios
+We plot the estimated hazard ratios for each analysis against the benchmarks from the RCT. Perfect estimates are those lat lie on the dotted 45 degree line.
+
+```{r primaryHr}
+primary_hr <- benchmark_hazard_ratios(primary_ate, benchmarks = rct_hr)
+autoplot(primary_hr)
+```
+
+Hazard ratios and 95 percent confidence intervals estimated using each propensity score method are also displayed in the table below. 
+
+```{r primaryHrTbl}
+html_table(primary_hr)
+```
+
+## Survival curves
+We also plot survival curves, which can be compared to the survival curves from the RCT above and used as an informal assessment of potential non-proportional hazards. In the next vignette, we will compare survival between the external and trial controls, which will provide a more direct test of the compatibility of the external control.
+
+```{r primarySurv, fig.height = 10}
+plot_survival(primary_ate, method = "iptw_att_trim")
+```
+
+# Sensitivity analyses
+A number of sensitivity analyses are performed to assess sensitivity of the results to modeling assumptions.
+
+## Propensity score methods
+The first sensitivty analysis assess the importance of difference propensity score methods.
+
+```{r psMethodsAte}
+psmethods_ate <- map_surv_ate(analysis$psweight, ydata_list = y_list,
+                              response = RESPONSE, id = ID,
+                              grp_id = GRP_ID,
+                              integer_grp_id = TRUE)
+
+```
+
+We compare the estimated and benchmark hazard ratios across the difference methodologies.
+
+```{r psMethodsHr, fig.height = 6}
+psmethods_hr <- benchmark_hazard_ratios(psmethods_ate, benchmarks = rct_hr)
+autoplot(psmethods_hr)
+```
+
+```{r psMethodsHrTbl}
+html_table(psmethods_hr)
+```
+
+## Double adjustment
+Next, we use "double adjustment" to estimate log hazard ratios, which simply includes each term in the propensity score model in the Cox model as well. Note that this results in estimation of a conditional rather than a marginal hazard ratio. We leverage the `update.surv_ate()` function to update the analysis above while only modifying the function argument of interest.
+
+```{r doubleAdjustmentAte}
+da_ate <- update(psmethods_ate, double_adjustment = TRUE)
+```
+
+We again compare the estimated and benchmark hazard ratios.
+
+```{r doubleAdjustmentHr, fig.height = 6}
+da_hr <- benchmark_hazard_ratios(da_ate, benchmarks = rct_hr)
+autoplot(da_hr)
+```
+
+## Interaction terms in the propensity score model
+An additional sensitivity analysis modifies the specification of the propensity score model by interacting the number of days since diagnosis with cancer stage (early or advanced). Since we have modeled the propensity score model, we re-impute the data (including the new interaction term in the imputation model) and all propensity score modeling steps. A complete propensity score pipeline including estimation of ATEs can be performed with `ps_surv()` and we can iterate over groups with `map_ps_surv()`. Note that we don't perform genetic matching here due to its slow run time. 
+
+These less parsimonious model results in predicted propensity scores that are either 0 or 1 as noted by the warning below, a violation of the strongly ignorable treatment assignment (SITA) assumption requiring each patient to have a nonzero probability of receiving either treatment.
+
+```{r interactionAte}
+ec_rct1_list <- group_split(ec_rct1, analysis_num)
+ps_form_interaction <- get_ps_formula(spline = FALSE, interaction = TRUE)
+interaction_ps_surv <- map_ps_surv(ec_rct1_list, 
+                                   formula = ps_form_interaction, 
+                                   ydata_list = y_list,
+                                   response = RESPONSE,
+                                   id = ID, grp_id = GRP_ID,
+                                   integer_grp_id = TRUE)
+```
+
+
+
+```{r interactionHR}
+interaction_hr <- benchmark_hazard_ratios(interaction_ps_surv$ate, benchmarks = rct_hr)
+autoplot(interaction_hr)
+```
+
+## Splines in the propensity score model
+We also modified the specification of the propensity score to include splines for the continuous covariates (age only), while removing the interaction term. Similar to above, we leverage the `update.grouped_ps_surv()` function to restimate `map_ps_surv()` while only modifying one argument (the propensity score model formula). This again results in some overfitting of the propensity score model.
+
+```{r splinesAte}
+ps_form_splines <- get_ps_formula(spline = TRUE, interaction = FALSE)
+splines_ps_surv <- update(interaction_ps_surv, formula = ps_form_splines)
+```
+
+```{r splinesHr}
+splines_hr <- benchmark_hazard_ratios(splines_ps_surv$ate, benchmarks = rct_hr)
+autoplot(splines_hr)
+```
+
+## Splines and interaction terms in the propensity score model
+In a final check of the specification of the propensity score model, we include both splines and interaction terms, which not surprisingly results in predicted propensity scores of 0 and 1. 
+
+```{r splinesInteractionAte}
+ps_form_splines_interaction <- get_ps_formula(spline = TRUE, interaction = TRUE)
+splines_interaction_ps_surv <- update(interaction_ps_surv, 
+                                      formula = ps_form_splines_interaction)
+```
+
+```{r splinesInteractionHr}
+splines_interaction_hr <- benchmark_hazard_ratios(splines_interaction_ps_surv$ate,
+                                                  benchmarks = rct_hr)
+autoplot(splines_interaction_hr)
+```
+
+## Missing indicators
+Finally, we assessed whether combining multiple imputation with indicator variables for missing observations could [reduce bias](https://doi.org/10.1186/s12874-020-01068-x). An indicator variable was created for each variable with at least one missing observation (prior to imputation) and given a value of 1 if it was missing and 0 otherwise.
+
+```{r missingIndicatorAte}
+missing_indicator_ps_surv <- update(interaction_ps_surv, 
+                                    formula = analysis$ps_formula,
+                                    missing_dummy = TRUE)
+```
+
+```{r missingIndicatorHr}
+missing_indicator_hr <- benchmark_hazard_ratios(missing_indicator_ps_surv$ate, 
+                                                benchmarks = rct_hr)
+autoplot(missing_indicator_hr)
+```
+
+# Summary of primary and sensitivity analyses
+Finally, we combine the hazard ratios across both the primary and the sensitivity analyses. We summarize the estimates across 14 pairwise comparisons by computing the root mean square error (RMSE) in comparisons of the estimated hazard ratios and RCT benchmarks. The "unadjusted" estimates surprisingly perform the best.
+
+```{r summaryHr, warning = FALSE, message = FALSE}
+sensitivity_lookup <- tribble(
+   ~id, ~Type,  ~`PS specification`, ~`Double adjustment`, ~`Missing data`,
+   "1", "Primary", "No interaction or splines", "No", "Multiple imputation",
+   "2", "Sensitivty", "No interaction or splines", "No", "Multiple imputation",
+   "3", "Sensitivty", "No interaction or splines", "Yes", "Multiple imputation",
+   "4", "Sensitivty", "No interaction or splines", "Yes", "Multiple imputation",
+   "5", "Sensitivty", "Splines and no interaction", "No", "Multiple imputation",
+   "6", "Sensitivty", "Splines and interaction", "No", "Multiple imputation",
+   "7", "Sensitivty", "No interaction or splines", "No", "Multiple imputation + missing indicator"
+)
+
+hr <- list(
+  `1` = primary_hr,
+  `2` = psmethods_hr %>% 
+    filter(method != "iptw_att_trim"), 
+  `3` = da_hr,
+  `4` = interaction_hr,
+  `5` = splines_hr,
+  `6` = splines_interaction_hr,
+  `7` = missing_indicator_hr
+) %>% 
+  bind_rows(.id = "id") %>%
+  left_join(sensitivity_lookup, by = "id")
+
+rmse <- function(estimate, truth) {
+  sqrt(mean((estimate - truth)^2))
+}
+
+hr %>%
+  group_by(Type, method, `PS specification`, `Double adjustment`,
+           `Missing data`) %>%
+  summarise(rmse = rmse(estimate, benchmark_estimate)) %>%
+  mutate(method = label_ps_method(method)) %>%
+  arrange(rmse) %>%
+  rename(`PS method` = method, RMSE = rmse) %>%
+  html_table() 
+```
+
+# Save results
+```{r save}
+analysis$loghr_trt_ic <- split(rct_loghr[, -1], rct_loghr$analysis_num)
+analysis$loghr_trt_ec <- lapply(unname(primary_ate$loghr), # Remove term column
+                                function(x) x[, !names(x) == "term"])
+saveRDS(analysis, "analysis-ate-trt-ec.rds")
+```

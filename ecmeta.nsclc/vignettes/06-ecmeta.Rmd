@@ -1,0 +1,382 @@
+---
+title: "Meta-analytic adjustment of hazard ratios for bias and variability"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: TRUE 
+    self_contained: TRUE
+pkgdown: 
+  as_is: false
+---
+
+```{r chunkSet, include = FALSE}
+knitr::opts_chunk$set(fig.height = 8, fig.width = 8, cache = FALSE)
+```
+
+```{r txtStats, include = FALSE}
+txt <- readRDS("txtstats.rds")
+```
+
+# Setup
+The objectives of this analysis is to apply the external control meta-analytic methodology (as described and implemented in the [`ecmeta`](https://pages.github.roche.com/RWDScodeshare/ecmeta/) package) to advanced non-small cell lung cancer (NSCLC). More specifically, we will use the 14 pairwise analyses as "reference studies" and show how they can be used to adjust log hazard ratio (HR) estimates from a single-arm trial (comparison of novel treatment arm with external control) for bias and variability. All estimates are based on the primary analysis detailed in `vignette("04-ate-trt-ec")`. 
+
+The following `R` packages and settings are used.
+
+```{r setup, warning = FALSE, message = FALSE}
+# R packages
+library("bayesplot")
+library("ecmeta")
+library("ecmeta.nsclc")
+library("dplyr")
+library("tidyr")
+library("kableExtra")
+library("ggplot2")
+library("gridExtra")
+theme_set(theme_bw())
+
+# MCMC settings
+N_CHAINS = 5
+N_BURNIN <- 1000
+N_ITER <- 2000
+```
+
+# Reference studies
+We read in the estimated log HRs from the 14 pairwise analyses and combine them into a single data frame.
+
+```{r referenceLoghr}
+analysis <- readRDS("analysis-ic-ec.rds")
+loghr <- bind_rows(
+  trt_ec = bind_rows(analysis$loghr_trt_ec, .id = "analysis_num"),
+  ic_ec = bind_rows(analysis$loghr_ic_ec, .id = "analysis_num"),
+  trt_ic = bind_rows(analysis$loghr_trt_ic, .id = "analysis_num"),
+  .id = "param"
+)
+rm(analysis)
+```
+
+The meta-analytic [methodology](https://pages.github.roche.com/RWDScodeshare/ecmeta/articles/methodology.html) adjusts comparisons between the treatment arm and external control in a new study using the relationship,
+
+$$
+\lambda_{TRTvIC}^{new} =  \lambda_{TRTvEC}^{new} - \lambda_{ICvEC}^{new},
+$$
+
+where $\lambda_{TRTvIC}$, $\lambda_{TRTvEC}$, and $\lambda_{ICvEC}$ are the true log HRs for the treatment vs. internal control, treatment vs. external control, and internal control vs. external control, respectively. Under the assumption of proportional hazards, this relationship holds exactly for the true underlying hazard ratios. Here, we assess the extent to which it is a reasonable approximation for the estimated log hazard ratios, $\hat{\lambda}$, in each study. 
+
+```{r loghrTable}
+loghr_wide <- loghr %>%
+  select(param, analysis_num, estimate) %>%
+  pivot_wider(names_from = "param",
+              values_from = c("estimate")) %>%
+  mutate(`trt_ec - ic_ec` = trt_ec - ic_ec,
+         error = trt_ic - (trt_ec - ic_ec))
+
+loghr_wide %>%
+  kbl() %>%
+  kable_styling() 
+```
+
+We can also express the relationship in terms of hazard ratios, $HR$,
+
+$$
+HR_{TRTvIC}^{new} =  \frac{HR_{TRTvEC}^{new}}{HR_{ICvEC}^{new}}. 
+$$
+
+```{r hrTable}
+loghr_wide %>%
+  mutate(across(where(is.double), .fns = exp)) %>%
+  rename(`error ratio` = error) %>%
+  kbl() %>%
+  kable_styling() 
+```
+
+
+# Example analysis for new study
+```{r newStudyTxtStats, echo = FALSE}
+median_loghr_trt_ec <- round(
+  exp(median(loghr[loghr$param == "trt_ec", ]$estimate)), 3
+)
+median_loghr_trt_ec_se <- round(
+  median(loghr[loghr$param == "trt_ec", ]$se), 3
+)
+
+my_format <- function(x, digits = 3) formatC(x, format = "f", digits = digits)
+txt$medianLoghrTrtEc <- my_format(median_loghr_trt_ec)
+txt$medianLoghrTrtEcSe <- my_format(median_loghr_trt_ec_se)
+```
+
+Consider a hypothetical new single-arm study that compared a novel treatment with an external control. The estimated HR is 0.7 and the standard error is set equal to the median of the standard error (`r median_loghr_trt_ec_se`) from the references studies.
+
+```{r newLoghrExample}
+new_loghr_trt_ec <- loghr_data(
+  estimate = log(.7),
+  standard_error = median(loghr[loghr$param == "trt_ec", ]$se)
+)
+```
+
+In this example, we show how to use the reference studies to adjust the HR from this single-arm study for bias and variability. 
+
+## Estimation of meta-analytic model
+An example analysis proceeds by first using the historical data to estimate the parameters of the meta-analytic model. The model estimates the log HR in a comparison of the internal and external control arms. 
+
+```{r ecmeta}
+# Setup data
+loghr_ic_ec <- as_loghr_data(
+  loghr[loghr$param == "ic_ec", ],
+  estimate = "estimate", standard_error = "se"
+)
+
+# Estimate the model
+loghr_ecmeta <- ecmeta(
+  loghr_ic_ec, method = "jags",
+  n_iter = N_ITER, n_chains = N_CHAINS, n_burnin = N_BURNIN,
+  prior_scale = student_t(0, 25, 1)
+)
+loghr_ecmeta
+```
+
+
+```{r ecmetaHist, fig.height = 5, fig.width = 8}
+mcmc_hist(loghr_ecmeta, binwidth = .005)
+```
+
+
+```{r ecmetaTxtStats, echo = FALSE}
+s <- summary(loghr_ecmeta)
+
+muhat <- round(s[s$param == "mu", "50%"], 3)
+sigmahat <- round(s[s$param == "sigma", "50%"], 3)
+
+# Min/max HR
+txt$hrMin <- my_format(exp(min(loghr$estimate)))
+txt$hrMax <- my_format(exp(max(loghr$estimate)))
+
+# (Exponential of) mu
+txt$muMedian <- my_format(muhat)
+txt$muExpMedian <- my_format(exp(muhat))
+txt$muExpLower <- my_format(exp(s[s$param == "mu", "2.5%"]))
+txt$muExpUpper <- my_format(exp(s[s$param == "mu", "97.5%"]))
+
+# sigma
+txt$sigmaMedian <- my_format(sigmahat)
+txt$sigmaLower <- my_format(s[s$param == "sigma", "2.5%"])
+txt$sigmaUpper <- my_format(s[s$param == "sigma", "97.5%"])
+```
+
+$\mu$ is an estimate of the bias of the external control relative to the internal control. The estimate is negative, $\hat{\mu}$ = `r  muhat`, which suggests that external control patients had, on average, shorter survival than trial controls, even after propensity score adjustment. The quantity, $\hat{\sigma}$ =  `r  sigmahat`, is an estimate of the extent to which the log HRs vary across the reference studies. 
+
+
+## Adjustment
+An adjustment of the log HR is performed using the `ecmeta::predict()` function, which "predicts" $\lambda_{TRTvIC}^{new}$, the true log HR (treatment vs. internal control), using (i) the meta-analytic model above and (ii) $\hat{\lambda}_{TRTvEC}^{new}$, the estimates of the log HR (treatment vs. external control) from the single-arm study.
+
+```{r}
+loghr_new <- predict(loghr_ecmeta, newdata = new_loghr_trt_ec)
+loghr_new
+```
+
+It is perhaps more convenient to summarize the HRs.
+
+```{r}
+summary(loghr_new, exponentiate = TRUE)
+```
+
+The mean of the true HR is pushed upwards because internal control patients tended to survive longer than the external control patients ($\hat{\mu}$ = `r muhat`). Furthermore, confidence intervals are larger for the true HR because of the variance of the estimates of $\lambda_{ICvEC}$ across the reference studies ($\hat{\sigma}$ = `r sigmahat`).
+
+We can also plot posterior densities of the hazard ratios using the `bayesplot` package. 
+
+```{r loghrNewMcmcArea, message = FALSE, fig.height = 6, fig.width = 7}
+loghr_seq <- seq(log(.5), log(1.5), length.out = 8)
+loghr_labs <- paste0(
+  "log(", 
+  formatC(exp(loghr_seq), format = "f", digits = 2),
+  ")"
+)
+mcmc_areas(loghr_new, pars = c("trt_ic", "trt_ec"),
+           point_est = "median", prob = .95) + 
+  scale_y_discrete(labels = c("trt_ic" = "TRTvIC", "trt_ec" = "TRTvEC"),
+                   expand = expansion(add = .05)) +
+  scale_x_continuous(breaks = loghr_seq, labels = loghr_labs) +
+  xlab("Log hazard ratio") +
+  coord_cartesian(xlim = c(log(.45), log(1.6)))
+```
+
+```{r SaveLoghrNewMcmcArea, echo = FALSE}
+ggsave("figs/loghr-new-density.jpeg", height = 5, width = 7)
+```
+
+```{r LoghrNewTxtStats, echo = FALSE}
+s <- summary(loghr_new, exponentiate = TRUE)
+txt$hrNewTrtIc <- my_format(s[s$param == "hr_trt_ic", "50%"])
+```
+
+# Model checking
+We check the model using leave-one-out cross validation (LOO CV) in which we use one of the reference studies for "testing" and the remaining for "training". Since there are 14 reference studies, LOO CV produces 14 predictions, which we call $\hat{y}$. Predictions are made in two ways: first, "unadjusted" predictions are made using $\hat{y}=\hat{\lambda}_{TRTvEC}^{new}$, and second, adjusted predictions are made using $\hat{y} = E(\lambda_{TRTvIC}^{new})$. In the adjusted case, the meta-analytic model is fit to the training data using `ecmeta::ecmeta()` and predictions are made on the test set with `ecmeta::predict.ecmeta()`
+
+
+```{r ecmetaCV, message = FALSE, results = "hide"}
+ecmeta_cv <- ecmeta_lpo_cv(
+  data = loghr, p = 1, 
+  method = "jags",
+  ecmeta_args = list(n_chains = 5, n_iter = 1000)
+)
+```
+
+We compute residuals as $y - \hat{y}$ and plot the density of the residuals. The unadjusted method produced results that are more biased (external control patients tend to have shorter survival than internal control patients), although neither method produces density functions that are centered at zero. 
+
+```{r ecmetaCVResidualsDensity, fig.height = 5}
+plot_residual <- function(cv) {
+  ggplot(cv, aes(x = std_residual, col = adjust)) +
+  geom_density() +
+  xlab("Residuals") +
+  ylab("Density") +
+  scale_color_discrete(name = "Adjustment") +
+  theme(legend.position = "bottom")
+}
+plot_residual(ecmeta_cv)
+```
+
+The distribution is not symmetric and has a longer right tail. This seems to be primarily caused by the 5th reference study for which $\hat{\lambda}_{ICvEC}^{new}$ was much larger than 1 (i.e., the external control patients lived longer than internal control patients). Removing this study results in a density plot that resembles a normal distribution, although it is still not centered at zero. 
+
+```{r, fig.height = 5}
+plot_residual(ecmeta_cv[ecmeta_cv$iteration != 5, ])
+```
+
+Note that the mean residual is closer to zero than the median residual.
+```{r}
+ecmeta_cv %>%
+  group_by(adjust) %>%
+  summarize(mean_residual = mean(residual),
+            median_residual = median(residual))
+```
+We can also use a QQ-plot to compare standardized residuals to those from a theoretical normal distribution. Residuals were standardized by dividing them by the standard deviation of $\hat{\lambda}_{TRTvIC}^{new}$.
+
+```{r ecmetaCVResidualsQQ, fig.height = 5}
+ggplot(ecmeta_cv %>%
+         mutate(adjustf = paste0("Adjust = ", adjust)), 
+       aes(sample = std_residual)) +
+  stat_qq() +
+ geom_abline(slope = 1,intercept = 0) +
+  facet_wrap(~adjustf) +
+  xlab("Theoretical (normal distribution)") +
+  ylab("Actual residuals")
+```
+
+```{r saveEcmetaCVResidualsQQ, echo = FALSE}
+ggsave("figs/ecmeta-cv-qqplot.jpeg", height = 4, width = 8)
+```
+
+# Sensitivity analyes
+## Removing outliers
+```{r ecmetaNo5}
+loghr_ecmeta_no5 <- ecmeta(
+  loghr_ic_ec[-5, ], 
+  n_chains = N_CHAINS, n_iter = N_ITER, n_burnin = N_BURNIN,
+  method = "jags",
+  prior_scale = student_t(0, 25, 1))
+loghr_ecmeta_no5
+```
+
+```{r ecmetaNo5Trace}
+mcmc_trace(loghr_ecmeta_no5)
+```
+
+```{r ecmetaTxtStatsNo5, echo = FALSE}
+s <- summary(loghr_ecmeta_no5)
+
+# (Exponential of) mu
+txt$muExpMedianNoOutlier <- my_format(exp(s[s$param == "mu", "50%"]))
+txt$muExpLowerNoOutlier <- my_format(exp(s[s$param == "mu", "2.5%"]))
+txt$muExpUpperNoOutlier <- my_format(exp(s[s$param == "mu", "97.5%"]))
+
+# sigma
+txt$sigmaMedianNoOutlier <- my_format(s[s$param == "sigma", "50%"])
+txt$sigmaLowerNoOutlier <- my_format(s[s$param == "sigma", "2.5%"])
+txt$sigmaUpperNoOutlier <- my_format(s[s$param == "sigma", "97.5%"])
+```
+
+## Estimation of sigma
+```{r ecmetaPriorSensitivity}
+# Inverse gamma prior
+loghr_ecmeta_ig <- ecmeta(
+  loghr_ic_ec, method = "jags",
+  n_iter = N_ITER, n_chains = N_CHAINS, n_burnin = N_BURNIN,
+  prior_scale = invgamma(0.001, 0.001),
+  quiet = TRUE
+)
+
+# Uniform prior
+loghr_ecmeta_unif <- ecmeta(
+  loghr_ic_ec, method = "jags",
+  n_iter = N_ITER, n_chains = N_CHAINS, n_burnin = N_BURNIN,
+  prior_scale = uniform(0, 100), 
+  quiet = TRUE
+)
+
+# Maximum-likelihood approach
+loghr_ecmeta_ml <- ecmeta(
+  loghr_ic_ec, method = "ml"
+)
+```
+
+```{r ecmetaPriorSensitivityPlot,fig.height = 5, fig.width = 7}
+# Posterior distributions by combining chains
+sigma_post_hc <- c(as.array(loghr_ecmeta)[,, "sigma"])
+sigma_post_ig <- c(as.array(loghr_ecmeta_ig)[,, "sigma"])
+sigma_post_unif <- c(as.array(loghr_ecmeta_unif)[,, "sigma"])
+sigma_post_ml <- rnorm(
+  N_ITER * N_CHAINS,
+  loghr_ecmeta_ml$estimates["logsigma"],
+  sqrt(loghr_ecmeta_ml$vcov["logsigma", "logsigma"])
+) %>% 
+  exp()
+
+# Combine into single object for plotting
+sigma_post <- data.frame(
+  label = c(
+    rep("Bayesian: half-Cauchy prior", length(sigma_post_hc)),
+    rep("Bayesian: inverse gamma prior", length(sigma_post_ig)),
+    rep("Bayesian: uniform prior", length(sigma_post_unif)),
+    rep("Maximum likelihood", length(sigma_post_unif))
+  ),
+  value = c(sigma_post_hc, sigma_post_ig, sigma_post_unif, sigma_post_ml)
+) 
+
+# Plot
+tbl <- as_tibble(sigma_post) %>%
+  group_by(label) %>%
+  summarize(
+    Mean = round(mean(value), 3),
+    Median = round(median(value), 3),
+    `2.5%` = round(quantile(value, .025), 3),
+    `97.5%` = round(quantile(value, .975), 3)
+  )
+colnames(tbl)[1] <- ""
+
+ggplot(sigma_post, aes(x = value, colour = label, linetype = label)) +
+  geom_density() + 
+  scale_x_continuous(breaks = seq(0, .6, .1)) +
+  scale_colour_discrete("") +
+  scale_linetype_discrete("") +
+  coord_cartesian(xlim = c(0, .6)) +
+  xlab("sigma") +
+  ylab("Density") +
+  theme(legend.position = "bottom", legend.box = "vertical") +
+  guides(colour = guide_legend(nrow = 2, byrow = TRUE)) +
+  annotation_custom(
+    tableGrob(
+      tbl, rows = NULL,
+      theme = ttheme_minimal(base_size = 8)
+    ),
+    xmin = 0.25
+  ) 
+```
+
+```{r saveecmetaPriorSensitivityPlot, echo = FALSE}
+ggsave("figs/ecmeta-prior-sensitivity-density.jpeg", height = 5, width = 7)
+```
+
+```{r saveTxtStats, echo = FALSE}
+saveRDS(txt, "txtstats.rds")
+```

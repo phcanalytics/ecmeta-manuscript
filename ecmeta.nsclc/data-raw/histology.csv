@@ -1,0 +1,15 @@
+﻿analysis_num,analysis_id,Did Carrigan et al. include histology?,I/E for trial,Histology in ecdata I/E?
+1,nct02008227_fi_1,1,NSCLC,No
+2,nct01903993_fi_1,1,NSCLC,No
+3,nct02366143_fi_1,0,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct02366143_fi.R#L62
+4,nct01351415_fi_1,0,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct01351415_fi.R#L73
+5,nct01519804_fi_1,0,Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct01519804_fi.R#L111
+6,nct01496742_fi_1,0,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct01496742_fi.R#L100
+7,nct01496742_fi_2,0,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct01496742_fi.R#L483
+8,nct01366131_fi_1,0,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct01366131_fi.R#L98
+9,nct01493843_fi_1,0,Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct01493843_fi.R#L61
+10,nct01493843_fi_2,0,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct01493843_fi.R#L524
+11,nct01493843_fi_3,0,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct01493843_fi.R#L524
+12,nct02367781_fi_1,N/A,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct02367781_fi.R#L480
+13,nct02367794_fi_1,N/A,Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct02367794_fi.R#L509
+14,nct02657434_fi_1,N/A,Non-Squamous NSCLC,https://github.roche.com/RWDScodeshare/ecdata/blob/master/R/build_nct02657434_fi.R#L480

@@ -1,0 +1,43 @@
+Package: ecmeta.nsclc
+Type: Package
+Title: Application of a Meta-Analytic Framework for Decision Making and Error Control to External Control Analyses in NSCLC
+Version: 0.1.0
+Authors@R: c(
+    person("Devin", "Incerti", , "incerti.devin@gene.com", role = c("aut", "cre")),
+    person("Michael", "Bretscher", , "michael.bretscher@roche.com", role = c("aut")),
+    person("Ray", "Lin", , "lins24@gene.com", role = c("aut")),
+    person("Chris", "Harbron", , "chris.harbron@roche.com", role = c("aut"))
+    )
+Description: A proof of concept in non-small cell lung cancer (NSCLC) of a
+  meta-analytic framework to adjust external control studies for additional bias
+  and variability due to the non-randomized design. A total of 14 pairwise comparisons
+  are reanalyzed using propensity score methods as the basis for application of the
+  framework.
+URL: https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc
+License: MIT
+LazyData: true
+Depends:
+    R (>= 3.6.0)
+Imports:
+    data.table,
+    dplyr,
+    ggplot2,
+    Hmisc,
+    kableExtra,
+    Matching,
+    mice,
+    rgenoud,
+    stats,
+    survival,
+    tidyr
+Suggests:
+    ecdata,
+    ecmeta,
+    DT,
+    knitr,
+    pins,
+    xtable,
+    tidyr
+VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.1.1

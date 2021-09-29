@@ -1,0 +1,191 @@
+---
+title: "Propensity score weighting and assessment of covariate balance"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: TRUE 
+    self_contained: TRUE
+pkgdown: 
+  as_is: false
+---
+
+# Setup
+The objectives of this analysis are to estimate the propensity score, weight the external control population so that its covariate distribution matches the clinical trial, and assess balance after weighting. Both inverse probability of treatment weighting with weights constructed for estimation of the average treatment effect for the treated (i.e., IPTW-ATT weights) and matching techniques are employed. The following `R` packages are used.
+
+```{r setup, warning  = FALSE, message = FALSE}
+# R packages
+library("dplyr")
+library("ecmeta.nsclc")
+library("ggplot2")
+library("kableExtra")
+library("purrr")
+
+# Settings
+theme_set(theme_bw())
+```
+
+# Propensity score estimation 
+Logistic regression is used to estimate the propensity score. The variables in the columns of the table below are considered for inclusion in the model. A 1 in the table indicates that a given variable was used for a particular analysis and a 0 indicates that it was not.
+
+```{r psmodelSpecification}
+ecmeta.nsclc::psmodel_specification %>%
+  select(-interaction) %>%
+  html_table() %>%
+  scroll_box(width = "100%")
+```
+
+
+We then create formulas using these variables for the propensity score models. We considered natural cubic splines (`splines::ns()`) for the continuous variables and an interaction between cancer stage and time since initial diagnosis. Both resulted in more extreme weights and did not improve balance, so they are not included here. 
+
+
+```{r analysis}
+analysis <- readRDS("analysis-impute.rds")
+analysis <- add_ps_formula(analysis, spline = FALSE, interaction = FALSE)
+```
+
+Separate logistic regressions are fit for each of the `r nrow(analysis)` analyses and each of the `r length(unique(analysis$impute_xdata[[1]]$imp))` multiply imputed datasets.
+
+```{r psfits}
+analysis$ps_model <- map2(analysis$ps_formula, analysis$impute_xdata, function (x, y) {
+  fit_ps_mi(formula = x, data = y)
+})
+```
+
+The logistic regression models are used to predict estimate the propensity scores.
+
+```{r ps}
+analysis$ps <- map(analysis$ps_model, predict_ps)
+```
+
+# Propensity score weighting
+The propensity score models are used to predict propensity scores and generate weights for each patient. Both IPTW and 1:1 nearest neighbor matching are used to generate the weights. In cases where the number of external control patients was less than the number of trial patients, matching is performed with replacement; otherwise, matching is performed without replacement. Matching was conducted with and without a caliper (of 0.25 standard deviations of the linear propensity score) and IPTW was conducted with and without trimming (i.e., excluding *external control patients* with values of the propensity less than the 1st percentile or above the 99th percentile).
+
+```{r psweight, cache = FALSE, warning = FALSE}
+ps_methods <- c(
+  "iptw_att", "iptw_att_trim",
+  "match_nearest", "match_nearest_caliper",
+  "match_genetic", "match_genetic_caliper"
+)
+analysis$psweight <- psweight(analysis$ps, methods = ps_methods,
+                              progress = TRUE,
+                              print.level = 0, outfile = "psweight_out",
+                              pop.size = 1000)
+psw <- rbind_list(analysis$psweight, id = "analysis_num", 
+                  integer_id = TRUE) 
+```
+
+We focus our assessments on the IPTW-ATT weighted models, which we consider our primary analysis. A comparison of all propensity score methods is available in the [sensitivity analyses](#sensitivity) below.
+
+## Distribution of weights
+The distribution of weights for the external control patients are plotted to check for the potential influence of extreme propensity scores. Plots are provided for weights generated with and without trimming. No weights are provided for the trial patients since they are all given a weight of 1. 
+
+```{r plotWeight}
+plot_weights(psw, method = "iptw_att")
+```
+
+```{r plotWeightTrim}
+plot_weights(psw, method = "iptw_att_trim")
+```
+
+
+# Assessment of balance
+
+## Distribution of the propensity score
+Density plots of the propensity score in each analysis for the treated (trial) and external control patients are shown below. We begin by plotting the unadjusted propensity score (i.e., without weighting).
+
+```{r plosPSUnadjusted, fig.height = 10, fig.width = 10}
+plot_ps(psw, method = "unadjusted")
+```
+
+We then plot weighted propensity score with and without trimming.
+
+```{r plosPSIptwAtt, fig.height = 10, fig.width = 10}
+plot_ps(psw, method = "iptw_att")
+```
+
+```{r plosPSIptwAttTrim, fig.height = 10, fig.width = 10}
+plot_ps(psw, method = "iptw_att_trim")
+```
+
+## Standardized mean differences
+We define the standardized mean difference (SMD) as $(\mu_t - \mu_c)\sigma$ where $\mu_t$ is the weighted mean among the treated patients, $\mu_c$ is the weighted mean among the control patients, and $\sigma$ is the standard deviation among the treated patients in the unweighted sample.  
+
+```{r smd}
+smd_out <- smd(psw)
+```
+
+SMDs are plotted for the estimated propensity score as well as each term in the propensity score model. We consider IPTW-ATT weights with and without trimming. Line ranges represent the minimum and maximum values from the multiple imputations and the point is the median value.
+
+```{r smdPlotIptwAtt, fig.height = 10, fig.width = 10}
+autoplot(smd_out, method = "iptw_att")
+```
+
+```{r smdPlotIptwAttTrim, fig.height = 10, fig.width = 10}
+autoplot(smd_out, method = "iptw_att_trim")
+```
+
+For comparison, we also plot SMDs where $\mu_t$ and $\mu_c$ are not weighted.
+
+```{r smdPlotUnadj, fig.height = 10, fig.width = 10}
+autoplot(smd_out, method = "unadjusted")
+```
+
+
+## Distribution of continuous covariates
+We also plot the distributions of the continuous covariates to assess balance on high order moments. We compare the trimmed IPTW-ATT weighted distributions to the unadjusted distributions. Recall that time since diagnosis was not included as a covariate in analysis 5. 
+
+```{r densityPlotAge, warning = FALSE, fig.height = 8}
+plot_density(psw, method = "iptw_att_trim", var = "age", xlab = "Age")
+```
+
+```{r densityPlotAgeUnadjusted, warning = FALSE, fig.height = 8}
+plot_density(psw, method = "unadjusted", var = "age", xlab = "Age")
+```
+
+```{r densityPlotDaysSinceDx, warning = FALSE, fig.height = 8}
+plot_density(psw, method = "iptw_att_trim", var = "days_since_dx", 
+             xlab = "Days since diagnosis") +
+  coord_cartesian(xlim = c(0, 1000))
+```
+
+```{r densityPlotDaysSinceDxUnadjusted, warning = FALSE, fig.height = 8}
+plot_density(psw, method = "unadjusted", var = "days_since_dx", 
+             xlab = "Days since diagnosis") +
+  coord_cartesian(xlim = c(0, 1000))
+```
+
+# Sensitivity analyses {#sensitivity}
+Two sensitivity analyses are performed. First, we compare the different propensity score methods. Comparisons are made by evaluating SMDs for the logit of the propensity scores. Second, we consider a very simple propensity score model that only includes one covariate -- age. We then compared SMDs between the fully specified propensity score model and the age only model when using IPTW-ATT weights with trimming.
+
+## Propensity score method
+```{r smdPlotSensitivity, fig.height = 10, fig.width = 10}
+autoplot(smd_out, method = NULL)
+```
+
+## Variable selection
+```{r psfitsAge, fig.height = 10, fig.width = 10}
+f_age <- treat ~ age
+analysis$ps_model_age <- map(analysis$impute_xdata, function (x) {
+  fit_ps_mi(formula = f_age, data = x)
+})
+analysis$ps_age <- map(analysis$ps_model_age, predict_ps)
+psw_age <- psweight(analysis$ps_age, methods = "iptw_att_trim") %>%
+  rbind_list(id = "analysis_num", integer_id = TRUE)
+smd_age <- smd(psw_age, x_vars = get_ps_vars())
+autoplot(smd_list(`Full model` = smd_out, `Age only model` = smd_age),
+        method = "iptw_att_trim")
+```
+
+# Save output
+```{r saveAnalysis}
+saveRDS(analysis, file = "analysis-balance.rds")
+```
+
+# Session information
+```{r session}
+sessionInfo()
+```
+

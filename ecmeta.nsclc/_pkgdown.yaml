@@ -1,0 +1,90 @@
+template:
+  params:
+    bootswatch: cerulean
+
+development:
+  mode: auto
+
+repo:
+  url:
+    home: https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/
+    source: https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/
+    issue: https://github.roche.com/incertid/ecmeta-manuscript/issues
+    user: https://github.roche.com
+
+reference:
+  - title: "Data preparation and exploration"
+    contents:
+      - preprocess
+      - new_analysis
+      - html_table.analysis
+      - count_missing
+      - autoplot.missing_counts
+      - plot_density.data.frame
+      - plot_bar
+      - count_by
+  - title: "Imputation"
+    contents:
+      - impute_formula
+      - multi_impute
+      - observed_vs_imputed
+      - autoplot.observed_vs_imputed
+  - title: "Propensity scores"
+    desc: "Model, weight, and check balance"
+    contents:
+      - get_ps_formula
+      - make_xdata
+      - fit_ps
+      - predict_ps
+      - psweight
+      - plot_weights
+      - plot_ps
+      - plot_density.grouped_psweight_mi
+      - smd
+      - smd_list
+      - autoplot.smd
+  - title: "Average treatment effects"
+    desc: "Estimate average treatment effects with survival data"
+    contents:
+      - surv_ate
+      - ps_surv
+      - update_ate
+      - marginal_survival
+      - autoplot.grouped_marginal_survival
+      - hazard_ratio
+      - autoplot.hazard_ratio
+      - benchmark_hazard_ratios
+      - autoplot.benchmarked_hazard_ratios
+      - html_table.benchmarked_hazard_ratios
+  - title: "Meta-analytic cross validation"
+    contents: 
+      - ecmeta_lpo_cv
+  - title: "Utility functions"
+    contents:
+      - label_ps_method
+      - rbind_list
+      - html_table
+      
+navbar:
+  title: ecmeta.nsclc
+  left:
+  - text: "API"
+    href: reference/index.html
+  - text: "Analysis plan"
+    href: sap/sap.pdf
+  - text: "Analysis"
+    menu:
+      - text: "Data preparation"
+        href: articles/01-data-prep.html
+      - text: "Imputation of missing data"
+        href: articles/02-impute.html
+      - text: "Propensity score estimation, weighting, and balance"
+        href: articles/03-balance.html  
+      - text: "Propensity score estimation, weighting, and balance (Shiny app)"
+        href: https://connect.phcaa.science.roche.com/content/1102
+      - text: "Treatment effect estimates: RCT experimental vs external control"
+        href: articles/04-ate-trt-ec.html  
+      - text: "Comparison of the internal and external control arms"
+        href: articles/05-ic-ec.html
+      - text: "Meta-analytic adjustment of hazard ratios"
+        href: articles/06-ecmeta.html

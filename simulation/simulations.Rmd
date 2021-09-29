@@ -1,0 +1,350 @@
+---
+title: "Simulations"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: TRUE 
+    code_folding: hide
+    theme: cerulean
+---
+
+```{r options, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+if (!dir.exists("cache")) dir.create("cache")
+```
+
+```{r setup, warning = FALSE, message = FALSE}
+# R packages
+library("dplyr")
+library("ecmeta")
+library("gam")
+library("ggplot2")
+library("magrittr")
+library("stringr")
+library("survival")
+library("tidyr")
+
+# Settings
+theme_set(theme_bw())
+
+# Functions for simulation
+source("functions.R")
+
+# Monitor output
+OUTFILE <- "output/sim-out.txt"
+cat("Starting simulation: \n", file = OUTFILE)
+
+# Cache
+CACHE <- FALSE
+if (!CACHE) {
+  f <- list.files("cache", include.dirs = F, full.names = T, recursive = T)
+  file.remove(f)
+}
+
+# Globals
+N_STUDIES <- 10000
+```
+
+# Simulation data and scenarios
+Survival data for `n_studies` is first simulated and hazard ratios are estimated for each study. Six different scenarios are used to simulate the survival data:
+
+* *S1*: Toy example where every study has the same number of events and has the same true outcomes, i.e. no between study heterogeneity
+
+* *S2*: Toy example with variability in the numbers of events in studies, but no between study heterogeneity in true outcomes
+
+* *S3*: Example with between study variability in both the numbers of events and outcomes in all three arms
+
+* *S4*: A more realistic null-hypothesis situation where the true trt v ic HR is fixed at one for all studies, with varying outcome for the external control and varying numbers of events  
+
+* *S5*: A version of *res4* assuming an alternative hypothesis of HR = 0.5
+
+* *S6*: Similar to *res3*, with the underlying simulation truth being distributed around an alternative hypothesis of HR > 1
+
+```{r simScenariosFun}
+sim_scenarios <- function(n_studies = 10000) {
+  ptm <- proc.time()
+  
+  s1 <- sim_survdata(
+    nstudies = n_studies, 
+    cv_trt = 0 , cv_ic = 0, cv_ec=0, 
+    ne_trt = 100, ne_ec = 50, ne_ic = 70
+  ) %>%
+    estimate_hrs()
+  cat("Simulated data for scenario 1 \n", file = OUTFILE, append = TRUE)
+  
+  s2 <- sim_survdata(
+    nstudies = n_studies, 
+    cv_trt = 0, cv_ic = 0, cv_ec = 0, 
+    ne_trt = 250, ne_ec = 250, ne_ic = 250, 
+    cvne_ic = 0.2, cvne_ec = 0.2 , cvne_trt = 0.2, 
+    med_trt = 24, med_ic = 24, med_ec = 18
+  ) %>%
+    estimate_hrs()
+  cat("Simulated data for scenario 2 \n", file = OUTFILE, append = TRUE)
+  
+  s3 <- sim_survdata(
+    nstudies = n_studies, 
+    cv_trt = 0.4, cv_ic = 0.2, cv_ec = 0.2, 
+    ne_trt = 250, ne_ec = 250, ne_ic = 250, 
+    cvne_ic = 0.2, cvne_ec = 0.2, cvne_trt = 0.2, 
+    med_trt = 24, med_ic = 24, med_ec = 18
+  ) %>%
+    estimate_hrs()
+  cat("Simulated data for scenario 3 \n", file = OUTFILE, append = TRUE)
+  
+  s4 <- sim_survdata(
+    nstudies = n_studies, 
+    cv_trt = 0.4, cv_ic = 0.2, cv_ec = 0.2, 
+    ne_trt = 250, ne_ec = 250, ne_ic = 150, 
+    cvne_ic = 0.2, cvne_ec = 0.2, cvne_trt = 0.2, 
+    med_trt = 24, med_ic = 24 , med_ec = 18 ,
+    randomisation_ratio = 1 , true_hr = 1 ) %>%
+    estimate_hrs()
+  cat("Simulated data for scenario 4 \n", file = OUTFILE, append = TRUE)
+  
+  s5 <- sim_survdata(
+    nstudies = n_studies,
+    cv_trt = 0.4, cv_ic = 0.2, cv_ec = 0.2, 
+    ne_trt = 250, ne_ec = 250, ne_ic = 150, 
+    cvne_ic = 0.2, cvne_ec = 0.2, cvne_trt = 0.2, 
+    med_trt = 24, med_ic = 24, med_ec = 18,
+    randomisation_ratio = 1, true_hr = 0.5 
+  ) %>%
+    estimate_hrs()
+  cat("Simulated data for scenario 5 \n", file = OUTFILE, append = TRUE)
+  
+  s6 <- sim_survdata(
+    nstudies = n_studies,
+    cv_trt = 0.4, cv_ic = 0.2, cv_ec = 0.2, 
+    ne_trt = 250, ne_ec = 250, ne_ic = 250, 
+    cvne_ic = 0.2, cvne_ec = 0.2, cvne_trt = 0.2, 
+    med_trt = 35, med_ic = 24, med_ec = 18,
+    randomisation_ratio = 1
+  ) %>%
+    estimate_hrs()
+  cat("Simulated data for scenario 6 \n", file = OUTFILE, append = TRUE)
+  
+  out <- list(s1 = s1, s2 = s2, s3 = s3, 
+       s4 = s4, s5 = s5, s6 = s6)
+  
+  run_time <- proc.time() - ptm
+  cat(
+    paste0("Time to simulate data for all scenarios: ", run_time["elapsed"], 
+           " seconds\n"), 
+           file = OUTFILE, append = TRUE
+  )
+  attr(out, "run_time") <- run_time
+  out
+}
+```
+
+```{r simdata}
+if (file.exists("cache/scenarios.RData")) {
+  load("cache/scenarios.RData")
+} else {
+  scenarios <- sim_scenarios(n_studies = N_STUDIES)
+  save(scenarios, file = "cache/scenarios.RData")
+}
+```
+
+For each of the 6 scenarios, we visualize the variability in the number of events and hazard ratios across the simulated studies.
+
+```{r plotSurvdataScenarios}
+lapply(1:length(scenarios) , function(i) plot_scenarios(scenarios[[i]], names(scenarios)[i]))
+```
+
+
+# Running the simulation
+
+```{r runSimsFun}
+run_sims <- function() {
+  ptm <- proc.time()
+  
+  out <- lapply(1:length(scenarios) , function(i) {
+    cat(paste0("Starting simulation for scenario", i, " \n"), 
+        file = OUTFILE, append = TRUE)
+    lapply(4:9, run_sim, .res = scenarios[[i]]) %>%
+      bind_rows() %>%
+      mutate(
+        scenario = names(scenarios)[i],
+        constant_hr = sd(truth) < 1e-15
+      )
+    }) %>%
+    bind_rows() 
+  
+  run_time <- proc.time() - ptm
+    cat(
+    paste0("Time to run simulation for all scenarios: ", run_time["elapsed"], 
+           " seconds\n"), 
+           file = OUTFILE, append = TRUE
+  )
+  attr(out, "run_time") <- run_time
+  out
+}
+```
+
+```{r runSims, results = "hide"}
+if (file.exists("cache/sims.rds")) {
+  sims <- readRDS("cache/sims.rds")
+} else {
+  #sims_old <- run_sims_old()
+  sims <- run_sims()
+  saveRDS(sims, file = "cache/sims.rds")
+}
+```
+
+# Bias
+
+```{r plotBias}
+plot_bias <- function(x) {
+  x %>%
+    ggplot() + 
+    geom_boxplot(aes(x = n_ref , y = bias , group = n_ref , fill = n_ref)) + 
+    geom_hline(aes(yintercept = 0)) +
+    facet_wrap(~scenario) + 
+    xlab("Number of reference studies") + 
+    ylab("Bias of log HR") +
+    theme(legend.position = "none")
+}
+```
+
+## Bayesian (half-Cauchy prior)
+
+```{r biasHalfCauchy, fig.height = 6, fig.width = 8}
+plot_bias(sims[sims$prior == "Half-Cauchy", ])
+```
+
+```{r biasHalfCauchySave, echo = FALSE}
+ggsave("figs/bias-cauchy.jpeg", height = 5, width = 7)
+```
+
+## Comparison
+
+```{r biasInvGamma, fig.height = 6, fig.width = 8}
+plot_bias(sims[sims$prior == "Inverse gamma", ])
+```
+
+```{r biasInvGammaSave, echo = FALSE}
+ggsave("figs/bias-gamma.jpeg", height = 5, width = 7)
+```
+
+```{r biasFrequentist, fig.height = 6, fig.width = 8}
+plot_bias(sims[sims$method == "Maximum likelihood", ])
+```
+
+```{r biasFrequentistSave, echo = FALSE}
+ggsave("figs/bias-frequentist.jpeg", height = 5, width = 7)
+```
+
+
+# Coverage
+
+```{r plotCoverage}
+plot_coverage <- function(x) {
+  x %>%
+    group_by(n_ref, scenario, method) %>%
+    summarise(covered95 = mean(covered95)) %>%
+    ggplot(aes(x = n_ref, y = covered95, colour = scenario)) + 
+    geom_hline(aes(yintercept = .95), lty = 2) +
+    geom_line() +
+    xlab("Number Of reference studies") + 
+    ylab("Coverage (95%)") +
+    scale_colour_discrete(name = "Scenario") 
+}
+```
+
+## Bayesian (half-Cauchy)
+
+```{r coverageHalfCauchy, fig.height = 8, fig.width = 8}
+plot_coverage(sims[sims$prior == "Half-Cauchy", ])
+```
+
+```{r coverageHalfCauchySave, echo = FALSE}
+ggsave("figs/coverage-cauchy.jpeg", height = 5, width = 7)
+```
+
+## Comparison
+
+```{r coverageComparison, fig.height = 8, fig.width = 8}
+plot_coverage(sims) + 
+  facet_wrap(~method, nrow = 2)
+```
+
+```{r coverageComparisonSave, echo = FALSE}
+ggsave("figs/coverage-comparison.jpeg", height = 5, width = 7)
+```
+
+# Power
+
+```{r plotPower}
+plot_power <- function(x) {
+  x %>%
+    group_by(scenario, n_ref, method) %>%
+    summarise(power = mean(sig)) %>%
+    ggplot(aes(x = n_ref, y = power, colour = scenario)) + 
+    geom_line() +
+    xlab("Number of reference studies") + 
+    ylab("Power") +
+    geom_hline(yintercept = 0.025 , lty = 2) + 
+    scale_colour_discrete("Scenario")
+}
+```
+
+```{r plotPowerByHr}
+plot_power_by_hr <- function(x) {
+  smooth_power <- x %>%
+    filter(!constant_hr) %>%
+    group_split(scenario, n_ref) %>%
+    lapply(function(.sim) {
+      power <- gam(sig ~ lo(truth) , family = "binomial" , data = .sim) %>%
+        predict(type = "response")
+      cbind(.sim , power)
+    }) %>%
+    bind_rows() %>%
+    arrange(scenario , n_ref , truth) 
+
+  ggplot(smooth_power, aes(x = truth, y = power, colour = factor(n_ref))) + 
+    geom_line() +
+    xlab("True Log HR (TRTvIC)") +
+    ylab("Power") + 
+    ylim(c(0, 1)) +
+    geom_hline(yintercept = 0.025 , lty = 2) + 
+    facet_wrap(~scenario) + 
+    scale_colour_discrete("Number of\nreference\nstudies") 
+}
+```
+
+## Bayesian (half-Cauchy)
+
+```{r powerHalfCauchy, fig.height = 6, fig.width = 8}
+plot_power(sims[sims$prior == "Half-Cauchy", ])
+```
+
+```{r powerHalfCauchySave, echo = FALSE}
+ggsave("figs/power-cauchy.jpeg", height = 5, width = 7)
+```
+
+```{r powerByHrHalfCauchy, fig.height = 6, fig.width = 8}
+plot_power_by_hr(sims[sims$prior == "Half-Cauchy", ])
+```
+
+```{r powerByHrHalfCauchySave, echo = FALSE}
+ggsave("figs/power-by-hr-cauchy.jpeg", height = 4, width = 8)
+```
+
+
+## Comparison
+
+```{r powerComparison, fig.height = 6, fig.width = 8}
+plot_power(sims) + 
+  facet_wrap(~method, nrow = 2)
+```
+
+```{r powerComparisonSave, echo = FALSE}
+ggsave("figs/power-comparison.jpeg", height = 5, width = 7)
+```
+
+

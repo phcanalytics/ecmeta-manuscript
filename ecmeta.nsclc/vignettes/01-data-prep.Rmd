@@ -1,0 +1,146 @@
+---
+title: "Preparation and exploration of external control datasets"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: TRUE 
+pkgdown: 
+  as_is: false
+---
+
+```{r txtStats, include = FALSE}
+txt <- list()
+saveRDS(txt, "txtstats.rds")
+```
+
+# Setup
+The purpose of this analysis is to explore the data, specifically the (i) amount of missingness in potential covariates, (ii) small sample sizes among categories of categorical variables, and (iii) the distribution of potential covariates across the treated and control groups prior to any adjustment. The following `R` packages are used.
+
+```{r setup, warning  = FALSE, message = FALSE}
+# R packages
+library("dplyr")
+library("ecdata")
+library("ecmeta.nsclc")
+library("ggplot2")
+library("kableExtra")
+library("pins")
+
+# Settings
+theme_set(theme_bw())
+```
+
+# Data
+The underlying dataset used for the analysis is built using the [`ecdata`](https://pages.github.roche.com/RWDScodeshare/ecdata/index.html) package. It consists of patients with advanced non-small cell lung cancer (NSCLC) and is documented [here](https://pages.github.roche.com/RWDScodeshare/ecdata/reference/nsclc.html). The `pins_nsclc()` pins the datasets locally using `pins::pin()` so that the dataset only needs to be built once. We preprocess the data into a format more suitable for propensity score modeling with the `preprocess()` function and filter to remove the comparator arm from the RCT in order to emulate a single arm trial.
+
+```{r data}
+ecdata::pin_nsclc(update = FALSE) # Pins dataset locally
+nsclc <- pin_get("nsclc") %>%
+  preprocess()
+ec_rct1 <- nsclc %>% # Hypothetical single arm trial with external control
+  filter(!(source_type == "RCT" & arm_type == "Comparator"))
+```
+
+All pairwise comparisons that will be used in the analyses are displayed in the table below.
+
+```{r analysisSummary} 
+analysis <- new_analysis(nsclc)  
+
+analysis %>%
+ html_table() %>%
+ scroll_box(width = "100%")
+```
+
+```{r saveAnalysisSummary, echo = FALSE}
+analysis %>%
+  select(analysis_num, source_rct, arm_experimental, arm_comparator,
+         n_trt, n_ic, n_ec) %>%
+  xtable::xtable() %>%
+  print(include.rownames = FALSE, include.colnames = FALSE,
+        only.contents = TRUE, sanitize.text.function = identity,
+        file = "tables/reference-studies.txt")
+```
+
+# Missing data
+We count the number of missing values of each potential covariate for each pairwise analysis. Both the number of missing and the proportion missing (of the total number of observations with each arm) are plotted.
+
+```{r, missingData, message = FALSE}
+n_missing_df <- count_missing(ec_rct1, vars = get_ps_vars())
+```
+
+## Proportion missing
+```{r propMissingPlot, message = FALSE, fig.height = 10, fig.width = 10}
+autoplot(n_missing_df, yvar = "prop_missing")
+```
+
+## Number missing
+```{r nMissingPlot, message = FALSE, fig.height = 10, fig.width = 10}
+autoplot(n_missing_df, yvar = "n_missing")
+```
+
+# Distribution of covariates {.tabset .tabset-pills}
+The distributions of the covariates in the unadjusted sample are plotted to check the degree of imbalance prior to adjustment and check for outliers or coding errors. There are a couple of points worth noting:
+
+- *NCT01366131* did not collect smoking information.
+
+- It is not possible to determine whether a patient is a "Never" smoker in *NCT01493843* because there is only a "Former/never" category. Smoking status can therefore not be used for propensity score analyses for this trial.
+
+- Patients in a race category with fewer than 10 observations were coded as "Other" race. 
+
+## Age
+```{r ageDensity, message = FALSE, fig.height = 10, fig.width = 10}
+plot_density(ec_rct1, var = "age")
+```
+
+## Days since Dx
+```{r daysSinceDxDensity, message = FALSE, fig.height = 10, fig.width = 10}
+plot_density(ec_rct1, var = "days_since_dx", xlim = c(0, 1000))
+``` 
+
+## Race
+```{r raceBarplot, message = FALSE, fig.height = 10, fig.width = 10}
+plot_bar(ec_rct1, var = "race_grouped")
+``` 
+
+## Sex
+```{r sexBarplot, message = FALSE, fig.height = 10, fig.width = 10}
+plot_bar(ec_rct1, var = "sex")
+``` 
+
+## Smoker
+```{r smokerBarplot, message = FALSE, fig.height = 10, fig.width = 10}
+plot_bar(ec_rct1, var = "smoker_grouped")
+``` 
+
+## Histology
+```{r histologyBarplot, message = FALSE, fig.height = 10, fig.width = 10}
+plot_bar(ec_rct1, var = "histology")
+``` 
+
+## Cancer stage
+```{r stageBarplot, message = FALSE, fig.height = 10, fig.width = 10}
+plot_bar(ec_rct1, var = "stage_grouped")
+``` 
+
+# Categorical variables with small sample sizes
+The plots above suggest that some categories of the categorical variables might still have small sample sizes even after preprocessing. Categories of categorical variables with fewer than 10 observations are shown in the table below. 
+
+```{r, message = FALSE}
+count_by(ec_rct1, vars = get_ps_catvars(), 
+         by = c("analysis_num", "source_type"),
+         max_n = 9) %>%
+  html_table()
+```
+
+# Save output
+```{r save}
+saveRDS(analysis, file = "analysis-data-prep.rds")
+```
+
+# Session information
+```{r session}
+sessionInfo()
+```
+

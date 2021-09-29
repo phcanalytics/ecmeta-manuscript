@@ -1,0 +1,114 @@
+---
+title: "Multiple imputation of baseline covariates"
+date: "`r Sys.Date()`"
+output:
+  html_document: 
+    toc: TRUE
+    toc_float: TRUE
+    toc_depth: 2
+    number_sections: TRUE 
+pkgdown: 
+  as_is: false
+---
+  
+# Setup
+The purpose of this analysis is to impute missing values of the covariates. Multiple imputation is used so that there are $M$ separate imputed datasets for each analysis. Although using outcome variables has been shown to improve imputation performance, is not used here so that propensity score modeling and covariate balancing can be performed without "peaking" at the outcomes. The following `R` packages are used.
+
+```{r setup, warning  = FALSE, message = FALSE}
+# R packages
+library("dplyr")
+library("ecmeta.nsclc")
+library("ggplot2")
+library("Hmisc")
+library("kableExtra")
+library("pins")
+library("purrr")
+
+# Settings
+theme_set(theme_bw())
+```
+
+# Data
+We load the data in the same manner as in `vignette("01-data-prep")`. 
+```{r data}
+ec_rct1 <- pin_get("nsclc") %>%
+  preprocess() %>%
+  filter(!(source_type == "RCT" & arm_type == "Comparator"))
+```
+
+# Multiple imputation
+Model formulas for imputation are based on the variables included in the propensity score models (see `vignette("03-balance")` for a more detailed look at the propensity score models). We interact the data source with the propensity score variables so that there is effectively a separate imputation model for the trial and external control patients.
+
+```{r analysisSample}
+ps_form <- get_ps_formula(splines = FALSE, interaction = FALSE)
+analysis <- readRDS("analysis-data-prep.rds") %>% 
+  add_impute_formula(ps_form, interaction = TRUE)
+```
+
+The imputation model is estimated using the `Hmisc::aregImpute()` function. Continuous predictors of target variables are transformed with restricted cubic splines (default of 3 internal knots). Predictive mean matching is used for imputation; by default, the imputation is performed by selecting the value of the target variable from the candidate donor that is the closest match. Bootstrapping is used to perform multiple imputation.
+
+```{r imputeModel}
+ec_rct1_list <- group_split(ec_rct1, analysis_num)
+analysis$impute_model <- map2(ec_rct1_list, analysis$impute_formula, function (x, y) {
+  x$race_grouped <- droplevels(x$race_grouped)
+  aregImpute(y, data = x, n.impute = 5, nk = 3, match = "closest", 
+             tlinear = TRUE, pr = FALSE)
+})
+```
+
+Missing values are then multiply imputed with `multi_impute()` which generates $M$ new datasets with missing values imputed by leveraging the `Hmisc::impute.transcan()` function. The $M$ complete datasets are stacked with a column `imp` identifying an imputation number. 
+
+```{r multiImpute}
+analysis$impute_xdata <- map2(analysis$impute_model, ec_rct1_list, function (x, y) {
+  y$race_grouped <- droplevels(y$race_grouped)
+  multi_impute(x, data = y)
+})
+```
+
+# Imputation diagnostics
+We inspect the imputation by comparing observed values to imputed values. The distributions of the observed and imputed values are generally similar, expect for cancer stage in some cases. This either suggests that cancer stage is not missing completely at random (MCAR) or that the imputation model is poor. There is some evidence that these systematic differences occur because time since diagnosis is a very strong predictor of cancer stage, which would not violate the missing at random (MAR) assumption. As we can see in the plot [below](#boxplot-by-stage),
+the distribution of time since diagnosis values is very similar between patients with missing and early cancer stages, whereas patients with advanced cancers tend to have shorter times since diagnosis. 
+
+## Observed vs. imputed
+### Categorical covariates
+```{r imputationDiagnosticsCat, fig.height = 15, fig.width = 10, message = FALSE}
+obsimp_cat <- map2(analysis$impute_model,  analysis$impute_xdata, function (x, y) {
+  observed_vs_imputed(x, data = y, type = "categorical", labels = get_ps_vars())
+}) %>%
+  setNames(analysis$analysis_num) %>%
+  bind_rows(.id = "grp")
+
+autoplot(obsimp_cat)
+```
+
+### Continuous covariates
+```{r imputationDiagnosticsCont, fig.height = 7, fig.width = 7, message = FALSE, warning = FALSE}
+obsimp_cont <- map2(analysis$impute_model,  analysis$impute_xdata, function (x, y) {
+  observed_vs_imputed(x, data = y, type = "continuous", labels = get_ps_vars())
+}) %>%
+  setNames(analysis$analysis_num) %>%
+  bind_rows(.id = "grp")
+
+autoplot(obsimp_cont) +
+  coord_cartesian(xlim = c(0, 2000))
+```
+
+## Association between time since diagnosis and stage {#boxplot-by-stage}
+```{r timeSinceDxVsStageBoxplot, warning = FALSE}
+ggplot(ec_rct1, aes(x = stage_grouped, y = days_since_dx)) + 
+  geom_boxplot() +
+  facet_wrap(~analysis_num) +
+  xlab("Stage") +
+  ylab("Days since diagnosis")
+```
+
+# Save output
+```{r saveAnalysis}
+saveRDS(analysis, file = "analysis-impute.rds")
+```
+
+# Session information
+```{r session}
+sessionInfo()
+```
+

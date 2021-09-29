@@ -1,0 +1,18 @@
+% latex table generated in R 4.0.0 by xtable 1.8-4 package
+% Wed Sep  8 19:23:48 2021
+  \hline
+  1 & NCT02008227 & Atezolizumab & Docetaxel & 425 & 425 & 526 \\ 
+    2 & NCT01903993 & Atezolizumab & Docetaxel & 144 & 143 & 476 \\ 
+    3 & NCT02366143 & Atezolizumab + Bevacizumab + Carboplatin & Bevacizumab + Carboplatin & 356 & 336 & 602 \\ 
+    4 & NCT01351415 & Bevacizumab + SOC & SOC & 245 & 240 & 381 \\ 
+    5 & NCT01519804 & MetMAb + Platinum + Paclitaxel & Placebo + Platinum + Paclitaxel &  55 &  54 & 1945 \\ 
+    6 & NCT01496742 & MetMAb + Bevacizumab + Platinum + Paclitaxel & Placebo + Bevacizumab + Platinum &  69 &  70 & 956 \\ 
+    7 & NCT01496742 & MetMAb + Platinum + Pemetrexed & Placebo + Platinum + Pemetrexed &  59 &  61 & 3244 \\ 
+    8 & NCT01366131 & MEGF0444A + Bevacizumab + Carboplatin + Paclitaxel & Placebo + Bevacizumab + Carboplatin + Paclitaxel &  52 &  52 & 963 \\ 
+    9 & NCT01493843 & Pictilisib (340 mg) + Carboplatin + Paclitaxel & Placebo (340 mg) + Carboplatin + Paclitaxel & 126 & 125 & 1274 \\ 
+   10 & NCT01493843 & Pictilisib (340 mg) + Carboplatin + Paclitaxel + Bevacizumab & Placebo (340 mg) + Carboplatin + Paclitaxel + Bevacizumab &  79 &  79 & 953 \\ 
+   11 & NCT01493843 & Pictilisib (260 mg) + Carboplatin + Paclitaxel + Bevacizumab & Placebo (260 mg) + Carboplatin + Paclitaxel + Bevacizumab &  62 &  30 & 953 \\ 
+   12 & NCT02367781 & Atezolizumab + Nab-Paclitaxel + Carboplatin & Nab-Paclitaxel + Carboplatin & 451 & 228 &  87 \\ 
+   13 & NCT02367794 & Atezolizumab + Nab-Paclitaxel + Carboplatin & Nab-Paclitaxel + Carboplatin & 343 & 340 & 497 \\ 
+   14 & NCT02657434 & Atezolizumab + Carboplatin or Cisplatin + Pemetrexed & Carboplatin or Cisplatin + Pemetrexed & 292 & 286 & 1536 \\ 
+   \hline
