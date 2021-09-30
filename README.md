@@ -1,9 +1,9 @@
 # A meta-analytic framework to adjust for bias in external control studies
 This repository contains code for a paper that introduces a meta-analytic approach for adjusting external control studies for additional bias and variability due to their non-randomized design. Code for the advanced non-small cell lung cancer (aNSCLC) example and the simulation study are available:
 
-* *Example*: Code in the  `ecmeta.nsclc` directory with a corresponding website with results available [here](https://phcanalytics.github.io/ecmeta-manuscript/ecmeta.nsclc/docs/). 
+* **Example**: Code is in the  `ecmeta.nsclc` directory with a corresponding website with results available [here](https://phcanalytics.github.io/ecmeta-manuscript/ecmeta.nsclc/docs/). 
 
-* *Simulation*: Code in the `simulation` directory with results from the simulations available [here](https://phcanalytics.github.io/ecmeta-manuscript/simulation/simulations.html).
+* **Simulation**: Code is in the `simulation` directory with results from the simulations available [here](https://phcanalytics.github.io/ecmeta-manuscript/simulation/simulations.html).
 
 ## Replication
 The entire analysis can be replicated by running the file `replicate.R`, which runs code to replicate the simulation study and the aNSCLC example, and retrieves all results (figures, tables, and inline text) that are reported in the manuscript.
