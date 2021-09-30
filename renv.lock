@@ -330,12 +330,6 @@
       "RemoteSha": "bb84468fadf8cc54c6e27f586b37e3046acb397f",
       "Hash": "50e8cc468462472a021619727db23106"
     },
-    "ecmeta.nsclc": {
-      "Package": "ecmeta.nsclc",
-      "Version": "0.1.0",
-      "Source": "unknown",
-      "Hash": "5d11c2faa667129fade0cc6c3640add3"
-    },
     "ellipsis": {
       "Package": "ellipsis",
       "Version": "0.3.2",
