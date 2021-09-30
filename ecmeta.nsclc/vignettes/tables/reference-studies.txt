@@ -1,5 +1,5 @@
 % latex table generated in R 4.0.0 by xtable 1.8-4 package
-% Wed Sep  8 19:23:48 2021
+% Thu Sep 30 20:40:25 2021
   \hline
   1 & NCT02008227 & Atezolizumab & Docetaxel & 425 & 425 & 526 \\ 
     2 & NCT01903993 & Atezolizumab & Docetaxel & 144 & 143 & 476 \\ 

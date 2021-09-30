@@ -1,0 +1,1 @@
+Tables that need to be saved for the manuscript are initially stored here before being copied in the `replicate` script.

@@ -1,3 +1,10 @@
+# Running this file replicates and retrieves all results reported in the paper
+# Since the analysis takes a long time to run, two files are created to monitor progress:
+# (1) ecmeta.nsclc/vignettes/psweight_out reports progress when generating propensity score weights 
+# for each study (the genetic matching algorithm is slow)
+# (2) simulation/output/sim-out tracks progress while simulating the data and evaluating
+# the model(s) with Monte Carlo replications
+
 run_simulation <- function() {
   rmarkdown::render(input = "simulation/simulations.Rmd", output_dir = "simulation")
 }

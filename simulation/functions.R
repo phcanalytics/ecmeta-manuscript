@@ -81,7 +81,7 @@ sim_survdata <- function(nstudies = 100,
   # The number of patients in each study is equal to the number of events
   dat <- studyarms[rep(seq_len(nrow(studyarms)), times = studyarms$ne_study), ] %>%
     mutate(
-      y = rexp(nrow(.), 1/med_study),
+      y = rexp(nrow(.), log(2)/med_study),
       event = 1,
       factor_arm = factor(arm , levels = c("ec", "ic", "trt"))
     ) 
