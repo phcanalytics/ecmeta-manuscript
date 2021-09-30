@@ -324,11 +324,11 @@
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
-      "RemoteUsername": "phcanalytics",
       "RemoteRepo": "ecmeta",
-      "RemoteRef": "main",
-      "RemoteSha": "bb84468fadf8cc54c6e27f586b37e3046acb397f",
-      "Hash": "50e8cc468462472a021619727db23106"
+      "RemoteUsername": "phcanalytics",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "637699af6bfc0d811cbe5698650d5f197c389126",
+      "Hash": "d73c0b00c3de9212e6625efba591f2bb"
     },
     "ellipsis": {
       "Package": "ellipsis",
@@ -819,6 +819,13 @@
       "Source": "Repository",
       "Repository": "CRAN",
       "Hash": "485f0c669f0cb6e354714ed74fe490c8"
+    },
+    "rjags": {
+      "Package": "rjags",
+      "Version": "4-11",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Hash": "aaa220235b8ce8cfc053bd3280b47928"
     },
     "rlang": {
       "Package": "rlang",
