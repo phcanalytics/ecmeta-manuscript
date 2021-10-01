@@ -1,0 +1,124 @@
+---
+title: "Decision Making and Error Control for External Controls: A Statistical Analysis Plan for Estimation of Parameters for Studies Evaluating Treatments for Advanced Non-Small Cell Lung Cancer"
+author: Devin Incerti, Michael Bretscher, Ray Lin, Chris Harbon
+date: "`r Sys.Date()`"
+output:
+  bookdown::pdf_document2:
+    citation_package: natbib
+header-includes:
+  - \usepackage{booktabs}
+  - \usepackage{longtable}
+  - \usepackage{array}
+  - \usepackage{multirow}
+  - \usepackage{wrapfig}
+  - \usepackage{float}
+  - \usepackage{colortbl}
+  - \usepackage{pdflscape}
+  - \usepackage{tabu}
+  - \usepackage{threeparttable}
+  - \usepackage{threeparttablex}
+  - \usepackage[normalem]{ulem}
+  - \usepackage{makecell}
+  - \usepackage{xcolor}
+bibliography: references.bib  
+---
+
+# Research question and objectives
+## Study background and rationale
+Randomized clinical trials (RCTs) are considered the gold standard for measuring the efficacy of treatments in medicine. Randomization of treatment assignment ensures that treatment effects have a causal interpretation. However, in some cases, it may not be feasible or ethical to perform a RCT. For example, a small target population may make enrollment of patients difficult. One manifestation of this is precision oncology, where single-arm trials have been used for accelerated or breakthrough regulatory approval. 
+
+Since there is no concurrent control group, interpretation of efficacy is difficult in single-arm trials. Although real-world data (RWD) can be used to construct “external controls” (ECs), naive comparisons to the trial data can be misleading due to differences in the underlying populations. Propensity score methods and regression adjustment aim to adjust for these differences so that treatment effects can be reliably estimated. 
+
+Still, estimating causal treatment effects with RWD is challenging because treatment assignment is not randomized. Bias in observational studies often results from factors including, but not limited to, unmeasured confounding, selection bias, and measurement error. Yet, while observational studies typically report uncertainty due to sampling variation, they rarely attempt to quantify the additional variability and bias resulting from the use of observational data. 
+
+We have developed a framework and meta-analytic model that can be used to incorporate these additional sources of bias and variability into EC analyses. The framework allows for prediction of true treatment effects in a new study given (i) EC treatment effects in the new study (i.e. a comparison of the trial experimental arm with an EC arm) and (ii) historical data comparing EC treatment effects to benchmark RCT treatment effects (i.e., a comparison of the trial experimental arm to the trial control arm). This document describes the analyses that will be used to estimate model parameters for a particular use case in advanced non-small cell lung cancer (NSCLC).
+
+##  Objectives
+1. Estimate the parameters needed to apply the statistical framework in advancd NSCLC using historical RCTs and RWD
+
+2. Illustrate use of the framework for hypothetical new trials in advanced NSCLC
+
+# Estimation of hazard ratios
+Parameterization requires estimates of the log hazard ratio of the internal control arm relative to the EC arm and the log hazard ratio of the experimental arm in the trial relative to the EC arm. Point estimates and standard errors of these quantities will be estimated from Cox models including a single binary covariate indicating whether a patient is in the trial or the EC data source. 
+
+A propensity score approach will be used, and will proceed in two parts. In part 1, propensity score methods will be used to adjust for observable differences in the trial and EC populations. In part 2, the average treatment effect on the treated (ATT) will be estimated so that estimates are based on the trial population. The remainder of this section outlines the propensity score methodology. 
+
+## Data sources
+Estimation will be performed using phase II and phase III RCTs for treatment of patients with advanced NSCLC. To ensure that patient-level data is available, trials will be restricted to those conducted by Roche. EC cohorts will consist of patients from Flatiron EHR data and datasets combining the EC and trial data will be built using Roche's internal [`ecdata`](https://github.roche.com/RWDScodeshare/ecdata) `R` package. Table  \@ref(tab:DataSources) provides a list of the complete analysis sample including the \url{ClinicalTrials.gov} ID numbers and the relevant experimental and comparator arms. 
+
+```{r, DataSources, echo = FALSE, warning=FALSE}
+library("kableExtra")
+library("readr")
+tbl <- read_csv("table1.csv", col_types = cols())
+kable(tbl, format = "latex", booktabs = TRUE,
+      caption = "Analysis sample for parameter estimation") %>%
+  kable_styling(latex_options =  "scale_down") %>%
+  column_spec(4, width = "2in") %>%
+  column_spec(5, width = "2in")
+```
+
+## Outcome
+The outcome is overall survival. Patients in the EC cohort will be right censored at the time of last follow-up from the trial. 
+
+## Variable selection {#sec:variable-selection}
+The covariates included in the propensity score model will be based on those included in @carrigan2020using:
+
+- Age
+- Race (White, Black, Other)
+- Sex
+- Histology (Non-squamous, Squamous)
+- Smoking status (Current/former, never)
+- Cancer stage at initial diagnosis (Advanced - IIIB/IV, Early - IIIA or below)
+- Time since initial diagnosis
+
+Race categories may be collapsed into an “Other” category if sample sizes are too small ($< 10$ observations). Furthermore, race will be coded as Asian or Non-Asian for comparisons with NCT01351415 because race was coded in that manner in the trial. Histology will only be included if histology was not part of the inclusion and exclusion criteria for the trials. Variables will be excluded for a particular trial if they were not collected for that trial. If balance (see [below](#balance)) is deemed inadequate, interaction terms and nonlinear functions of continuous covariates will be considered: Specifically, age and time since initial diagnosis will be modeled with restricted cubic splines using 3 knots and time since initial diagnosis will be interacted with cancer stage at initial diagnosis.
+
+## Missing data
+Missing data will be imputed using multivariate imputation by chained equations (MICE) [@buuren2010mice]. This multiple imputation approach has typically resulted in lower bias and variance than other methods when the data is missing at random (MAR) [@white2011multiple; @choi2019comparison; @leyrat2019propensity].
+
+There are two options when performing a propensity score analysis on multiply imputed data: first, treatment effect estimates can be combined across datasets, and second, treatment effects can be estimated after combining the propensity score. We will use the former approach given that simulation evidence suggests it produces unbiased estimates and appropriate confidence intervals, while the latter does not (@leyrat2019propensity; @granger2019avoiding). That is, for each imputed dataset, we (i) estimate the propensity score and (ii) estimate treatment effects given the estimated propensity score. Pooled point estimates and confidence intervals will be estimated by combining the treatment effects from each of the imputed datasets using Rubin’s rule. 
+
+## Propensity score estimation 
+Logistic regression will be used to estimate the propensity score using the covariates described in Section \@ref(sec:variable-selection).
+
+## Inverse probability weighting
+Inverse probability of treatment weighting (IPTW) permitting estimation of the ATT---commonly referred to as IPTW-ATT weighting---will be used. Trial patients receive a weight of 1 while EC patients receive a weight of $e/(1-e)$ where $e$ is the propensity score. In other words, after weighting, the distribution of covariates in the EC is the same as in the trial.
+
+## Trimming
+Propensity scores close to 0 or 1 can result in extreme weights. The impact of large weights can be reduced by "trimming", which can either refer to truncation of large weights downward (or small weights upward) or to exclusion of patients with extreme weights. We will use the latter approach and remove EC patients with propensity scores greater than the 99th percentile or less than the 1st percentile.
+
+## Assessment of balance {#balance}
+Baseline demographic and clinical characteristics will be compared across the trial and EC patients pre- and post-matching. Three types of diagnostics will be used. First, standardized mean differences (SMDs) will be computed for each covariate and displayed graphically. Thresholds of 0.1 [@nguyen2017double] and 0.25 [@ho2007matching] will be used as visual aids for assessing balance, although we note that these are somewhat arbitrary. Second, density plots of the distributions of the propensity score will be displayed. Third, density plots will be provided for each continuous covariate since researchers have argued that balance diagnostics should extend beyond comparisons of means to comparisons of higher order moments [@imai2008misunderstandings; @austin2009balance].
+
+## Hazard ratios
+Hazard ratios will be estimated using IPTW-ATT weighted Cox models. Models will be fit without covariate adjustment; that is, they will only include a single covariate for treatment assignment. This approach facilitates estimation of a marginal hazard ratio [@daniel2020making], which is typically the estimand of interest from a RCT. 
+
+Bootstrapping will be used to estimate the variances of the point estimates. The entire propensity score methodology including estimation of the propensity score and estimation of hazard ratios using the Cox model will be implemented during each bootstrap sample.  
+
+# Sensitivity analyses
+## Trimming
+Estimates will be reported with and without trimming.  
+
+## Variable selection
+Two alternative specifications of the propensity score model will be used to assess sensitivity of the results to the "quality" of the propensity score methodology. First, hazard ratios will be estimated using unweighted Cox models so that no population adjustment is performed. Second, a less discriminating propensity score will be estimated using only a single variable, age. 
+
+## Double adjustment
+To facilitate simple estimation of marginal hazard ratios, the Cox models in the primary analyses do not adjust for baseline covariates. However a large literature dating back to @rubin1973use has shown that regression combined with propensity score methods results in greater reduction in bias than when using either method alone, particularly when imbalance persists after population adjustment. For example, simulation evidence from @nguyen2017double suggests that adjusting for covariates with standardized differences greater than 0.1 after propensity score adjustment can remove residual confounding bias. Furthermore, even in RCTs, covariate adjustment increases power [@daniel2020making]. A sensitivity analysis will consequently estimate hazard ratios with regression adjustment (i.e., by including all covariates used in the propensity score model in the Cox model). 
+
+## Propensity score method
+A number of propensity score methods have been suggested in the literature in addition to IPTW to adjust for differences in the treated and control populations. These include matching, stratification on the propensity score, and inclusion of the propensity score as a covariate. Simulation work has generally shown the weighting and matching are able to estimate conditional and marginal treatment effects with the least bias and smallest mean squared error [@austin2007performance; @austin2013performance]. The sensitivity analyses will consequently be limited to matching.
+
+The first matching algorithm that will be evaluated is greedy 1:1 nearest neighbor matching using the linear propensity score. For a given treated subject, 1:1 nearest neighbor matching will select the control subject whose value of the linear propensity score is closest; that is, for a treated subject $i$, the control subject $j$ with the minimum value of $D_{ij}=|logit(e_i)-logit(e_j)|$ will be chosen where $e_{k}$ is the propensity score for subject $k$. If multiple control subjects are equally close to a treated subject, then the treated subject is chosen at random. Greedy matching implies that control subjects are chosen one at a time and the order in which they are chosen matters. Matching will be performed without replacement (except in cases where the number of control subjects is less than the number of treated subjects) to ensure that the matched controls are independent, although it is worth noting that there is given evidence that matching with replacement can reduce bias [@abadie2006large; @stuart2010matching].
+
+A challenge of nearest neighbor matching---and propensity core methods more generally---is that it is difficult to specify a model that achieves satisfactory covariate balance. An iterative process of fitting the model, assessing balance, and respecifying the model has often been recommended [@rosenbaum1984reducing; @austin2008critical; @belitser2011measuring]. Genetic matching can help overcome some of these challenges since the weight given to each covariate is based on an evolutionary search algorithm that iteratively checks and improves covariate balance [@sekhon2008multivariate; @diamond2013genetic]. We will employ this algorithm using both the linear propensity score and all the covariates specified above, so that matching on the propensity score and the Mahalanobis distance are limiting cases. We will continue to use 1:1 matching given evidence from the simulation study by @austin2010statistical showing that mean square error is typically minimized when matching either 1 or 2 controls to each treated subject. 
+
+Both algorithms will be performed without a caliper and without a caliper. Following the advice of @rosenbaum1985constructing---and the general consensus in the field---analyses will be performed with a caliper on the linear propensity score of 0.25 standard deviations. Note that calipers may remove trial patients and change the estimand. 
+
+# Validation
+Validation of the methodology will be performed using repeated k-fold cross validation. We will set $k=5$ so that 80% of the data ($n = 12$) is used for parameter estimation and 20% ($n = 3$) is used for testing for each of the 5 splits of the data. The process will be repeated 10 times to reduce dependence on the chosen partitions. 
+
+The training data will be used to estimate all parameters of the meta-analytic model. The parameterized meta-analytic model will, in turn, be used to estimate true treatment effects for each of the studies in the test data; that is, EC treatment effects will be estimated for each of the studies in the test data and true treatment effects will be predicted conditional on the estimated EC treatment effects.
+
+Performance will be evaluated by averaging across the 5*10=50 cross-validation iterations. The predicted true treatment effects will be compared to the estimated RCT treatment effects. Evaluation metrics will include bias and 95% coverage probabilities.
+
+# References

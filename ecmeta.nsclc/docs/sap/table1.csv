@@ -1,0 +1,15 @@
+Number,Clinical trial,External control,Experimental,Comparator
+1,NCT02008227,Flatiron,Atezolizumab,Docetaxel
+2,NCT01903993,Flatiron,Atezolizumab,Docetaxel
+3,NCT02366143,Flatiron,Atezolizumab + Bevacizumab + Carboplatin,Bevacizumab + Carboplatin
+4,NCT01351415,Flatiron,Bevacizumab + SOC,SOC
+5,NCT01519804,Flatiron,MetMAb + Platinum + Paclitaxel,Placebo + Platinum + Paclitaxel
+6,NCT01496742,Flatiron,MetMAb + Bevacizumab + Platinum + Paclitaxel,Placebo + Bevacizumab + Platinum
+7,NCT01496742,Flatiron,MetMAb + Platinum + Pemetrexed,Placebo + Platinum + Pemetrexed
+8,NCT01366131,Flatiron,MEGF0444A + Bevacizumab + Carboplatin + Paclitaxel,Placebo + Bevacizumab + Carboplatin + Paclitaxel
+9,NCT01493843,Flatiron,Pictilisib (340 mg) + Carboplatin + Paclitaxel,Placebo (340 mg) + Carboplatin + Paclitaxel
+10,NCT01493843,Flatiron,Pictilisib (340 mg) + Carboplatin + Paclitaxel + Bevacizumab,Placebo (340 mg) + Carboplatin + Paclitaxel + Bevacizumab
+11,NCT01493843,Flatiron,Pictilisib (260 mg) + Carboplatin + Paclitaxel + Bevacizumab,Placebo (260 mg) + Carboplatin + Paclitaxel + Bevacizumab
+12,NCT02367781,Flatiron,Atezolizumab + Nab-Paclitaxel + Carboplatin,Nab-Paclitaxel + Carboplatin
+13,NCT02367794,Flatiron,Atezolizumab + Nab-Paclitaxel + Carboplatin,Nab-Paclitaxel + Carboplatin
+14,NCT02657434,Flatiron,Atezolizumab + Carboplatin or Cisplatin + Pemetrexed,Carboplatin or Cisplatin + Pemetrexed
