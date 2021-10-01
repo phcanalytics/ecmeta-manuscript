@@ -60,9 +60,6 @@
       <a href="../articles/03-balance.html">Propensity score estimation, weighting, and balance</a>
     </li>
     <li>
-      <a href="https://connect.phcaa.science.roche.com/content/1102">Propensity score estimation, weighting, and balance (Shiny app)</a>
-    </li>
-    <li>
       <a href="../articles/04-ate-trt-ec.html">Treatment effect estimates: RCT experimental vs external control</a>
     </li>
     <li>
@@ -76,8 +73,8 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/main/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -91,14 +88,14 @@
 
       
 
-      </header><div class="row">
+      </header><script src="05-ic-ec_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>A comparison of the internal and external controls</h1>
             
             <h4 class="date">2021-10-01</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/vignettes/05-ic-ec.Rmd"><code>vignettes/05-ic-ec.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/main/ecmeta.nsclc/vignettes/05-ic-ec.Rmd"><code>vignettes/05-ic-ec.Rmd</code></a></small>
       <div class="hidden name"><code>05-ic-ec.Rmd</code></div>
 
     </div>
@@ -109,50 +106,54 @@
 <h1 class="hasAnchor">
 <a href="#setup" class="anchor"></a>Setup</h1>
 <p>The objectives of this analysis is to compare the internal control to the external control. The external control is weighted using the propensity score methods discussed in <code><a href="../articles/03-balance.html">vignette("03-balance")</a></code>. The following <code>R</code> packages, settings, and global variables are used.</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="co"># R packages</span>
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"dplyr"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"ecmeta.nsclc"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"ggplot2"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"kableExtra"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"pins"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"purrr"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"survival"</span>)
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># R packages</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://dplyr.tidyverse.org">"dplyr"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc">"ecmeta.nsclc"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ggplot2.tidyverse.org">"ggplot2"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="http://haozhu233.github.io/kableExtra/">"kableExtra"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/rstudio/pins">"pins"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="http://purrr.tidyverse.org">"purrr"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/therneau/survival">"survival"</a></span><span class="op">)</span>
 
 <span class="co"># Settings</span>
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme_get.html">theme_set</a></span>(<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>())
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme_get.html">theme_set</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 
 <span class="co"># Global variables</span>
-<span class="no">RESPONSE</span> <span class="kw">&lt;-</span> <span class="st">"Surv(os_days, os_status)"</span>
-<span class="no">SURV_FORMULA</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/formula.html">as.formula</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="no">RESPONSE</span>, <span class="st">" ~ ic"</span>))
-<span class="no">ID</span> <span class="kw">&lt;-</span><span class="st">"patient_id"</span>
-<span class="no">GRP_ID</span> <span class="kw">&lt;-</span> <span class="st">"analysis_num"</span></pre></body></html></div>
+<span class="va">RESPONSE</span> <span class="op">&lt;-</span> <span class="st">"Surv(os_days, os_status)"</span>
+<span class="va">SURV_FORMULA</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/formula.html">as.formula</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">RESPONSE</span>, <span class="st">" ~ ic"</span><span class="op">)</span><span class="op">)</span>
+<span class="va">ID</span> <span class="op">&lt;-</span><span class="st">"patient_id"</span>
+<span class="va">GRP_ID</span> <span class="op">&lt;-</span> <span class="st">"analysis_num"</span></code></pre></div>
 </div>
 <div id="data" class="section level1">
 <h1 class="hasAnchor">
 <a href="#data" class="anchor"></a>Data</h1>
 <p>All analyses are based on the preprocessed data we have used previously; however, we now remove the RCT experimental arm from the dataset.</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">ec_ic</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/pins/man/pin_get.html">pin_get</a></span>(<span class="st">"nsclc"</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/preprocess.html">preprocess</a></span>() <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(!(<span class="no">source_type</span> <span class="kw">==</span> <span class="st">"RCT"</span> <span class="kw">&amp;</span> <span class="no">arm_type</span> <span class="kw">==</span> <span class="st">"Experimental"</span>)) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">ic</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span>(<span class="no">source_type</span> <span class="kw">==</span> <span class="st">"RCT"</span>, <span class="fl">1</span>, <span class="fl">0</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ec_ic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/pins/man/pin_get.html">pin_get</a></span><span class="op">(</span><span class="st">"nsclc"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/preprocess.html">preprocess</a></span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">source_type</span> <span class="op">==</span> <span class="st">"RCT"</span> <span class="op">&amp;</span> <span class="va">arm_type</span> <span class="op">==</span> <span class="st">"Experimental"</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>ic <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html">ifelse</a></span><span class="op">(</span><span class="va">source_type</span> <span class="op">==</span> <span class="st">"RCT"</span>, <span class="fl">1</span>, <span class="fl">0</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>Our workflow requires us to separate outcomes and covariate data to avoid “cheating”. We continue to do that here:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">y_list</span> <span class="kw">&lt;-</span> <span class="no">ec_ic</span> <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="no">patient_id</span>, <span class="no">analysis_num</span>, <span class="no">os_days</span>, <span class="no">os_status</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span>(<span class="no">analysis_num</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">y_list</span> <span class="op">&lt;-</span> <span class="va">ec_ic</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">patient_id</span>, <span class="va">analysis_num</span>, <span class="va">os_days</span>, <span class="va">os_status</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">analysis_num</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="propensity-score-and-survival-modeling" class="section level1">
 <h1 class="hasAnchor">
 <a href="#propensity-score-and-survival-modeling" class="anchor"></a>Propensity score and survival modeling</h1>
 <p>We estimate propensity scores, generate weights, and perform survival analysis in the same manner as has been done previously. We use a propensity score model without splines or interaction terms. The exposure group in the propensity score is the internal control and the reference group is the external control.</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">ec_ic_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span>(<span class="no">ec_ic</span>, <span class="no">analysis_num</span>)
-<span class="no">ps_form</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span>(<span class="kw">spline</span> <span class="kw">=</span> <span class="fl">FALSE</span>, <span class="kw">interaction</span> <span class="kw">=</span> <span class="fl">FALSE</span>, <span class="kw">treat</span> <span class="kw">=</span> <span class="st">"ic"</span>)
-<span class="no">ec_ic_ps_surv</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/ps_surv.html">map_ps_surv</a></span>(<span class="no">ec_ic_list</span>,
-                             <span class="kw">formula</span> <span class="kw">=</span> <span class="no">ps_form</span>,
-                             <span class="kw">ydata_list</span> <span class="kw">=</span> <span class="no">y_list</span>,
-                             <span class="kw">response</span> <span class="kw">=</span> <span class="no">RESPONSE</span>,
-                             <span class="kw">id</span> <span class="kw">=</span> <span class="no">ID</span>, <span class="kw">grp_id</span> <span class="kw">=</span> <span class="no">GRP_ID</span>,
-                             <span class="kw">integer_grp_id</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ec_ic_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span><span class="op">(</span><span class="va">ec_ic</span>, <span class="va">analysis_num</span><span class="op">)</span>
+<span class="va">ps_form</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span><span class="op">(</span>spline <span class="op">=</span> <span class="cn">FALSE</span>, interaction <span class="op">=</span> <span class="cn">FALSE</span>, treat <span class="op">=</span> <span class="st">"ic"</span><span class="op">)</span>
+<span class="va">ec_ic_ps_surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ps_surv.html">map_ps_surv</a></span><span class="op">(</span><span class="va">ec_ic_list</span>, 
+                             formula <span class="op">=</span> <span class="va">ps_form</span>, 
+                             ydata_list <span class="op">=</span> <span class="va">y_list</span>,
+                             response <span class="op">=</span> <span class="va">RESPONSE</span>,
+                             id <span class="op">=</span> <span class="va">ID</span>, grp_id <span class="op">=</span> <span class="va">GRP_ID</span>,
+                             integer_grp_id <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
@@ -180,22 +181,25 @@
 <div id="unadjusted" class="section level2">
 <h2 class="hasAnchor">
 <a href="#unadjusted" class="anchor"></a>Unadjusted</h2>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu">plot_survival</span>(<span class="no">ec_ic_ps_surv</span>$<span class="no">ate</span>, <span class="kw">method</span> <span class="kw">=</span> <span class="st">"unadjusted"</span>,
-              <span class="kw">strata_labels</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"External control"</span>, <span class="st">"Internal control"</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">plot_survival</span><span class="op">(</span><span class="va">ec_ic_ps_surv</span><span class="op">$</span><span class="va">ate</span>, method <span class="op">=</span> <span class="st">"unadjusted"</span>,
+              strata_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"External control"</span>, <span class="st">"Internal control"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="05-ic-ec_files/figure-html/survunadjusted-1.png" width="768"></p>
 </div>
 <div id="iptw-att-trimmed" class="section level2">
 <h2 class="hasAnchor">
 <a href="#iptw-att-trimmed" class="anchor"></a>IPTW-ATT (trimmed)</h2>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu">plot_survival</span>(<span class="no">ec_ic_ps_surv</span>$<span class="no">ate</span>, <span class="kw">method</span> <span class="kw">=</span> <span class="st">"iptw_att_trim"</span>,
-              <span class="kw">strata_labels</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"External control"</span>, <span class="st">"Internal control"</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">plot_survival</span><span class="op">(</span><span class="va">ec_ic_ps_surv</span><span class="op">$</span><span class="va">ate</span>, method <span class="op">=</span> <span class="st">"iptw_att_trim"</span>,
+              strata_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"External control"</span>, <span class="st">"Internal control"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="05-ic-ec_files/figure-html/survIptwAttTrim-1.png" width="768"></p>
 </div>
 <div id="nearest-neighbor-matching-no-caliper" class="section level2">
 <h2 class="hasAnchor">
 <a href="#nearest-neighbor-matching-no-caliper" class="anchor"></a>Nearest neighbor matching (no caliper)</h2>
-<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="fu">plot_survival</span>(<span class="no">ec_ic_ps_surv</span>$<span class="no">ate</span>, <span class="kw">method</span> <span class="kw">=</span> <span class="st">"match_nearest"</span>,
-              <span class="kw">strata_labels</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"External control"</span>, <span class="st">"Internal control"</span>))</pre></body></html></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">plot_survival</span><span class="op">(</span><span class="va">ec_ic_ps_surv</span><span class="op">$</span><span class="va">ate</span>, method <span class="op">=</span> <span class="st">"match_nearest"</span>,
+              strata_labels <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"External control"</span>, <span class="st">"Internal control"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="05-ic-ec_files/figure-html/survMatchNearest-1.png" width="768"></p>
 </div>
 </div>
@@ -204,45 +208,48 @@
 <a href="#hazard-ratios" class="anchor"></a>Hazard ratios</h1>
 <p>We also plot (log) hazard ratios. A log hazard ratio &lt; log(1) = 0 implies that survival is better in the internal control and would suggest that external control analyses (trial experiment arm vs external control) would be biased toward the trial experimental arm. A log hazard ratio of log(1) = 0 would imply that the external control is very compatible with the internal control.</p>
 <p>We start with our primary analysis where estimation was performed using inverse probability of treatment weights for estimation of the average treatment effect on the treated (IPTW-ATT weights) with trimming.</p>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="no">ec_ic_loghr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/hazard_ratio.html">hazard_ratio</a></span>(<span class="no">ec_ic_ps_surv</span>$<span class="no">ate</span>, <span class="kw">exponentiate</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
-<span class="no">y_breaks</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span>(-<span class="fl">1</span>, <span class="fl">.8</span>, <span class="kw">by</span> <span class="kw">=</span> <span class="fl">.2</span>)
-<span class="no">y_labels</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ec_ic_loghr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/hazard_ratio.html">hazard_ratio</a></span><span class="op">(</span><span class="va">ec_ic_ps_surv</span><span class="op">$</span><span class="va">ate</span>, exponentiate <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> 
+<span class="va">y_breaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">.8</span>, by <span class="op">=</span> <span class="fl">.2</span><span class="op">)</span>
+<span class="va">y_labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span>
   <span class="st">"log("</span>,
-  <span class="fu"><a href="https://rdrr.io/r/base/formatc.html">formatC</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(<span class="no">y_breaks</span>), <span class="kw">format</span> <span class="kw">=</span> <span class="st">"f"</span>, <span class="kw">digits</span> <span class="kw">=</span> <span class="fl">2</span>),
+  <span class="fu"><a href="https://rdrr.io/r/base/formatc.html">formatC</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">y_breaks</span><span class="op">)</span>, format <span class="op">=</span> <span class="st">"f"</span>, digits <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,
   <span class="st">")"</span>
-)
+<span class="op">)</span>
 
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="no">ec_ic_loghr</span>[<span class="no">ec_ic_loghr</span>$<span class="no">method</span> <span class="kw">==</span> <span class="st">"iptw_att_trim"</span>, ],
-       <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">x</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span>(<span class="no">analysis_num</span>), <span class="kw">y</span> <span class="kw">=</span> <span class="no">estimate</span>)) +
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html">geom_pointrange</a></span>(<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="kw">ymin</span> <span class="kw">=</span> <span class="no">lower</span>, <span class="kw">ymax</span> <span class="kw">=</span> <span class="no">upper</span>), <span class="kw">size</span> <span class="kw">=</span> <span class="fl">.3</span>) +
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">xlab</a></span>(<span class="st">"Reference study"</span>) +
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ylab</a></span>(<span class="st">"Log hazard ratio"</span>) +
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html">geom_hline</a></span>(<span class="kw">yintercept</span> <span class="kw">=</span> <span class="fl">0</span>, <span class="kw">linetype</span> <span class="kw">=</span> <span class="st">"dashed"</span>, <span class="kw">col</span> <span class="kw">=</span> <span class="st">"grey"</span>) +
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html">scale_y_continuous</a></span>(<span class="kw">breaks</span> <span class="kw">=</span> <span class="no">y_breaks</span>, <span class="kw">labels</span> <span class="kw">=</span> <span class="no">y_labels</span>)</pre></body></html></div>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span><span class="op">(</span><span class="va">ec_ic_loghr</span><span class="op">[</span><span class="va">ec_ic_loghr</span><span class="op">$</span><span class="va">method</span> <span class="op">==</span> <span class="st">"iptw_att_trim"</span>, <span class="op">]</span>,
+       <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html">factor</a></span><span class="op">(</span><span class="va">analysis_num</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">estimate</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html">geom_pointrange</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">lower</span>, ymax <span class="op">=</span> <span class="va">upper</span><span class="op">)</span>, size <span class="op">=</span> <span class="fl">.3</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">xlab</a></span><span class="op">(</span><span class="st">"Reference study"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html">ylab</a></span><span class="op">(</span><span class="st">"Log hazard ratio"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, col <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html">scale_y_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="va">y_breaks</span>, labels <span class="op">=</span> <span class="va">y_labels</span><span class="op">)</span> </code></pre></div>
 <p><img src="05-ic-ec_files/figure-html/hrPlotPrimary-1.png" width="672"></p>
 <p>We also assess sensitivity of the hazard ratios to the propensity score method.</p>
-<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="no">y_breaks</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span>(-<span class="fl">.8</span>, <span class="fl">.8</span>, <span class="kw">by</span> <span class="kw">=</span> <span class="fl">.4</span>)
-<span class="no">y_labels</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">y_breaks</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html">seq</a></span><span class="op">(</span><span class="op">-</span><span class="fl">.8</span>, <span class="fl">.8</span>, by <span class="op">=</span> <span class="fl">.4</span><span class="op">)</span>
+<span class="va">y_labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span>
   <span class="st">"log("</span>,
-  <span class="fu"><a href="https://rdrr.io/r/base/formatc.html">formatC</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span>(<span class="no">y_breaks</span>), <span class="kw">format</span> <span class="kw">=</span> <span class="st">"f"</span>, <span class="kw">digits</span> <span class="kw">=</span> <span class="fl">2</span>),
+  <span class="fu"><a href="https://rdrr.io/r/base/formatc.html">formatC</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Log.html">exp</a></span><span class="op">(</span><span class="va">y_breaks</span><span class="op">)</span>, format <span class="op">=</span> <span class="st">"f"</span>, digits <span class="op">=</span> <span class="fl">2</span><span class="op">)</span>,
   <span class="st">")"</span>
-)
+<span class="op">)</span>
 
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">ec_ic_loghr</span>) +
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html">geom_hline</a></span>(<span class="kw">yintercept</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span>(<span class="fl">1</span>), <span class="kw">linetype</span> <span class="kw">=</span> <span class="st">"dashed"</span>, <span class="kw">col</span> <span class="kw">=</span> <span class="st">"grey"</span>) +
-  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html">scale_y_continuous</a></span>(<span class="kw">breaks</span> <span class="kw">=</span> <span class="no">y_breaks</span>, <span class="kw">labels</span> <span class="kw">=</span> <span class="no">y_labels</span>)</pre></body></html></div>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">ec_ic_loghr</span><span class="op">)</span> <span class="op">+</span> 
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html">log</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span>, col <span class="op">=</span> <span class="st">"grey"</span><span class="op">)</span> <span class="op">+</span>
+  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html">scale_y_continuous</a></span><span class="op">(</span>breaks <span class="op">=</span> <span class="va">y_breaks</span>, labels <span class="op">=</span> <span class="va">y_labels</span><span class="op">)</span> </code></pre></div>
 <p><img src="05-ic-ec_files/figure-html/hrPlotByMethod-1.png" width="768"></p>
 </div>
 <div id="save-results" class="section level1">
 <h1 class="hasAnchor">
 <a href="#save-results" class="anchor"></a>Save results</h1>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="no">analysis</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span>(<span class="st">"analysis-ate-trt-ec.rds"</span>)
-<span class="no">analysis</span>$<span class="no">loghr_ic_ec</span> <span class="kw">&lt;-</span> <span class="no">ec_ic_ps_surv</span>$<span class="no">ate</span> <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(<span class="no">method</span> <span class="kw">==</span> <span class="st">"iptw_att_trim"</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html">pull</a></span>(<span class="no">loghr</span>) <span class="kw">%&gt;%</span>
-  <span class="no">unname</span> <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span>(<span class="kw">function</span>(<span class="no">x</span>) <span class="no">x</span>[, !<span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span>(<span class="no">x</span>) <span class="kw">==</span> <span class="st">"term"</span>]) <span class="co"># Remove term column</span>
-<span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">saveRDS</a></span>(<span class="no">analysis</span>, <span class="st">"analysis-ic-ec.rds"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="st">"analysis-ate-trt-ec.rds"</span><span class="op">)</span>
+<span class="va">analysis</span><span class="op">$</span><span class="va">loghr_ic_ec</span> <span class="op">&lt;-</span> <span class="va">ec_ic_ps_surv</span><span class="op">$</span><span class="va">ate</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">method</span> <span class="op">==</span> <span class="st">"iptw_att_trim"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html">pull</a></span><span class="op">(</span><span class="va">loghr</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="va">unname</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">==</span> <span class="st">"term"</span><span class="op">]</span><span class="op">)</span> <span class="co"># Remove term column</span>
+<span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">saveRDS</a></span><span class="op">(</span><span class="va">analysis</span>, <span class="st">"analysis-ic-ec.rds"</span><span class="op">)</span></code></pre></div>
 </div>
   </div>
 
@@ -261,7 +268,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

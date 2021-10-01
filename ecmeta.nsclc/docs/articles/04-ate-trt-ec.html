@@ -60,9 +60,6 @@
       <a href="../articles/03-balance.html">Propensity score estimation, weighting, and balance</a>
     </li>
     <li>
-      <a href="https://connect.phcaa.science.roche.com/content/1102">Propensity score estimation, weighting, and balance (Shiny app)</a>
-    </li>
-    <li>
       <a href="../articles/04-ate-trt-ec.html">Treatment effect estimates: RCT experimental vs external control</a>
     </li>
     <li>
@@ -76,8 +73,8 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/main/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -91,14 +88,15 @@
 
       
 
-      </header><script src="04-ate-trt-ec_files/kePrint-0.0.1/kePrint.js"></script><div class="row">
+      </header><script src="04-ate-trt-ec_files/accessible-code-block-0.0.1/empty-anchor.js"></script><script src="04-ate-trt-ec_files/kePrint-0.0.1/kePrint.js"></script><link href="04-ate-trt-ec_files/lightable-0.0.1/lightable.css" rel="stylesheet">
+<div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Estimation of average treatment effects: RCT experimental vs external control</h1>
             
             <h4 class="date">2021-10-01</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/vignettes/04-ate-trt-ec.Rmd"><code>vignettes/04-ate-trt-ec.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/main/ecmeta.nsclc/vignettes/04-ate-trt-ec.Rmd"><code>vignettes/04-ate-trt-ec.Rmd</code></a></small>
       <div class="hidden name"><code>04-ate-trt-ec.Rmd</code></div>
 
     </div>
@@ -109,69 +107,75 @@
 <h1 class="hasAnchor">
 <a href="#setup" class="anchor"></a>Setup</h1>
 <p>The objectives of this analysis is to estimate average treatment effects (ATE) using the propensity score methods assessed in <code><a href="../articles/03-balance.html">vignette("03-balance")</a></code>. We compare the experimental arm from the randomized clinical trials (RCTs) to the external control. While the primary treatment effect metric is the hazard ratio, we report survivor functions as well. The following <code>R</code> packages, settings, and global variables are used.</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="co"># R packages</span>
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"dplyr"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"ecmeta.nsclc"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"ggplot2"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"kableExtra"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"pins"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"purrr"</span>)
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="st">"survival"</span>)
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># R packages</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://dplyr.tidyverse.org">"dplyr"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc">"ecmeta.nsclc"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://ggplot2.tidyverse.org">"ggplot2"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="http://haozhu233.github.io/kableExtra/">"kableExtra"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/rstudio/pins">"pins"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="http://purrr.tidyverse.org">"purrr"</a></span><span class="op">)</span>
+<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="st"><a href="https://github.com/therneau/survival">"survival"</a></span><span class="op">)</span>
 
 <span class="co"># Settings</span>
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme_get.html">theme_set</a></span>(<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span>())
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme_get.html">theme_set</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html">theme_bw</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 
 <span class="co"># Global variables</span>
-<span class="no">RESPONSE</span> <span class="kw">&lt;-</span> <span class="st">"Surv(os_days, os_status)"</span>
-<span class="no">SURV_FORMULA</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/formula.html">as.formula</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span>(<span class="no">RESPONSE</span>, <span class="st">" ~ treat"</span>))
-<span class="no">ID</span> <span class="kw">&lt;-</span><span class="st">"patient_id"</span>
-<span class="no">GRP_ID</span> <span class="kw">&lt;-</span> <span class="st">"analysis_num"</span></pre></body></html></div>
+<span class="va">RESPONSE</span> <span class="op">&lt;-</span> <span class="st">"Surv(os_days, os_status)"</span>
+<span class="va">SURV_FORMULA</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/formula.html">as.formula</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/paste.html">paste0</a></span><span class="op">(</span><span class="va">RESPONSE</span>, <span class="st">" ~ treat"</span><span class="op">)</span><span class="op">)</span>
+<span class="va">ID</span> <span class="op">&lt;-</span><span class="st">"patient_id"</span>
+<span class="va">GRP_ID</span> <span class="op">&lt;-</span> <span class="st">"analysis_num"</span></code></pre></div>
 </div>
 <div id="data" class="section level1">
 <h1 class="hasAnchor">
 <a href="#data" class="anchor"></a>Data</h1>
 <p>All analyses are based on the preprocessed data we have used previously.</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">ec_rct</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/pins/man/pin_get.html">pin_get</a></span>(<span class="st">"nsclc"</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/preprocess.html">preprocess</a></span>()
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ec_rct</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/pins/man/pin_get.html">pin_get</a></span><span class="op">(</span><span class="st">"nsclc"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/preprocess.html">preprocess</a></span><span class="op">(</span><span class="op">)</span> 
 
-<span class="no">ec_rct1</span> <span class="kw">&lt;-</span> <span class="no">ec_rct</span> <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(!(<span class="no">source_type</span> <span class="kw">==</span> <span class="st">"RCT"</span> <span class="kw">&amp;</span> <span class="no">arm_type</span> <span class="kw">==</span> <span class="st">"Comparator"</span>))</pre></body></html></div>
+<span class="va">ec_rct1</span> <span class="op">&lt;-</span> <span class="va">ec_rct</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">source_type</span> <span class="op">==</span> <span class="st">"RCT"</span> <span class="op">&amp;</span> <span class="va">arm_type</span> <span class="op">==</span> <span class="st">"Comparator"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>However, to ensure that outcomes did not influence our propensity score models, our prior analyses did not use any outcome data. We add the outcomes data here so that we can estimate survival models.</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="no">y_list</span> <span class="kw">&lt;-</span> <span class="no">ec_rct1</span> <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span>(<span class="no">patient_id</span>, <span class="no">analysis_num</span>, <span class="no">os_days</span>, <span class="no">os_status</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span>(<span class="no">analysis_num</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">y_list</span> <span class="op">&lt;-</span> <span class="va">ec_rct1</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html">select</a></span><span class="op">(</span><span class="va">patient_id</span>, <span class="va">analysis_num</span>, <span class="va">os_days</span>, <span class="va">os_status</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">analysis_num</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span><span class="op">(</span><span class="op">)</span> </code></pre></div>
 </div>
 <div id="rct-benchmarks" class="section level1">
 <h1 class="hasAnchor">
 <a href="#rct-benchmarks" class="anchor"></a>RCT benchmarks</h1>
 <p>We first obtain RCT datasets for each of the analyses so that we can generate hazard ratio benchmarks for our external control analyses.</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">rct_list</span> <span class="kw">&lt;-</span> <span class="no">ec_rct</span>[<span class="no">ec_rct</span>$<span class="no">source_type</span> <span class="kw">==</span> <span class="st">"RCT"</span>, ] <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span>(<span class="no">analysis_num</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span>()</pre></body></html></div>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">rct_list</span> <span class="op">&lt;-</span> <span class="va">ec_rct</span><span class="op">[</span><span class="va">ec_rct</span><span class="op">$</span><span class="va">source_type</span> <span class="op">==</span> <span class="st">"RCT"</span>, <span class="op">]</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">analysis_num</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p>Hazard ratios are estimated with Cox models that include a single covariate for treatment assignment. We first estimate log hazard ratios (which we will need for our meta-analytic model) and then transform them to hazard ratios for presentation.</p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="co"># Estimate log hazard ratios</span>
-<span class="no">rct_loghr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span>(<span class="no">rct_list</span>, <span class="kw">function</span>(<span class="no">x</span>) {
-  <span class="no">fit</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/coxph.html">coxph</a></span>(<span class="no">SURV_FORMULA</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">x</span>)
-  <span class="no">loghr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span>(<span class="no">fit</span>), <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span>(<span class="fu"><a href="https://rdrr.io/r/stats/vcov.html">vcov</a></span>(<span class="no">fit</span>)), <span class="fu"><a href="https://rdrr.io/r/stats/confint.html">confint</a></span>(<span class="no">fit</span>))
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/reexports.html">tibble</a></span>(<span class="kw">estimate</span> <span class="kw">=</span> <span class="no">loghr</span>[<span class="fl">1</span>],
-         <span class="kw">se</span> <span class="kw">=</span> <span class="no">loghr</span>[<span class="fl">2</span>],
-         <span class="kw">lower</span> <span class="kw">=</span> <span class="no">loghr</span>[<span class="fl">3</span>],
-         <span class="kw">upper</span> <span class="kw">=</span> <span class="no">loghr</span>[<span class="fl">4</span>])
-}) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span>(<span class="kw">.id</span> <span class="kw">=</span> <span class="st">"analysis_num"</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">analysis_num</span> <span class="kw">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span>(<span class="no">analysis_num</span>))
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="co"># Estimate log hazard ratios</span>
+<span class="va">rct_loghr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span><span class="op">(</span><span class="va">rct_list</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/coxph.html">coxph</a></span><span class="op">(</span><span class="va">SURV_FORMULA</span>, data <span class="op">=</span> <span class="va">x</span><span class="op">)</span>
+  <span class="va">loghr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/vcov.html">vcov</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/confint.html">confint</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span>
+  <span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html">tibble</a></span><span class="op">(</span>estimate <span class="op">=</span> <span class="va">loghr</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,
+         se <span class="op">=</span> <span class="va">loghr</span><span class="op">[</span><span class="fl">2</span><span class="op">]</span>,
+         lower <span class="op">=</span> <span class="va">loghr</span><span class="op">[</span><span class="fl">3</span><span class="op">]</span>,
+         upper <span class="op">=</span> <span class="va">loghr</span><span class="op">[</span><span class="fl">4</span><span class="op">]</span><span class="op">)</span>
+<span class="op">}</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span><span class="op">(</span>.id <span class="op">=</span> <span class="st">"analysis_num"</span><span class="op">)</span> <span class="op">%&gt;%</span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>analysis_num <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html">as.integer</a></span><span class="op">(</span><span class="va">analysis_num</span><span class="op">)</span><span class="op">)</span>
 
 <span class="co"># Transform to hazard ratios</span>
-<span class="no">rct_hr</span> <span class="kw">&lt;-</span> <span class="no">rct_loghr</span> <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html">across</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="no">estimate</span>, <span class="no">lower</span>, <span class="no">upper</span>), <span class="kw">.fns</span> <span class="kw">=</span> <span class="no">exp</span>))</pre></body></html></div>
+<span class="va">rct_hr</span> <span class="op">&lt;-</span> <span class="va">rct_loghr</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/across.html">across</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="va">estimate</span>, <span class="va">lower</span>, <span class="va">upper</span><span class="op">)</span>, .fns <span class="op">=</span> <span class="va">exp</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>We also generate Kaplan-Meier estimates stratified by treatment assignment.</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="no">rct_surv</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span>(<span class="no">rct_list</span>, <span class="kw">function</span>(<span class="no">x</span>) {
-  <span class="no">km</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/survfit.html">survfit</a></span>(<span class="no">SURV_FORMULA</span>, <span class="kw">data</span> <span class="kw">=</span> <span class="no">x</span>)
-  <span class="fu"><a href="../reference/marginal_survival.html">marginal_survival</a></span>(<span class="no">km</span>)
-}) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/rbind_list.html">rbind_list</a></span>(<span class="kw">id</span> <span class="kw">=</span> <span class="st">"analysis_num"</span>, <span class="kw">integer_id</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">rct_surv</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">rct_surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span><span class="op">(</span><span class="va">rct_list</span>, <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">{</span>
+  <span class="va">km</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/survival/man/survfit.html">survfit</a></span><span class="op">(</span><span class="va">SURV_FORMULA</span>, data <span class="op">=</span> <span class="va">x</span><span class="op">)</span>
+  <span class="fu"><a href="../reference/marginal_survival.html">marginal_survival</a></span><span class="op">(</span><span class="va">km</span><span class="op">)</span>
+<span class="op">}</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/rbind_list.html">rbind_list</a></span><span class="op">(</span>id <span class="op">=</span> <span class="st">"analysis_num"</span>, integer_id <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">rct_surv</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/rctSurv-1.png" width="768"></p>
 </div>
 <div id="primary-estimates" class="section level1">
@@ -182,23 +186,27 @@
 <h2 class="hasAnchor">
 <a href="#treatment-effect-estimation" class="anchor"></a>Treatment effect estimation</h2>
 <p>We load in information for each of the 14 analyses includes the propensity score weights we estimated in <code><a href="../articles/03-balance.html">vignette("03-balance")</a></code>.</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="no">analysis</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span>(<span class="st">"analysis-balance.rds"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="st">"analysis-balance.rds"</span><span class="op">)</span></code></pre></div>
 <p>We use the <code><a href="../reference/surv_ate.html">surv_ate()</a></code> function to estimate log hazard ratios and survivor functions. We iterate over each of the 14 “groups” with <code><a href="../reference/surv_ate.html">map_surv_ate()</a></code>. Standard errors for the hazard ratios are clustered by patient ID and estimates are pooled across imputations using Rubin’s rule.</p>
-<div class="sourceCode" id="cb8"><html><body><pre class="r"><span class="no">primary_psw</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span>(<span class="no">analysis</span>$<span class="no">psweight</span>, <span class="kw">function</span> (<span class="no">x</span>) <span class="no">x</span>[<span class="no">x</span>$<span class="no">method</span> <span class="kw">==</span> <span class="st">"iptw_att_trim"</span>, ])
-<span class="no">primary_ate</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/surv_ate.html">map_surv_ate</a></span>(<span class="no">primary_psw</span>, <span class="kw">ydata_list</span> <span class="kw">=</span> <span class="no">y_list</span>,
-                            <span class="kw">response</span> <span class="kw">=</span> <span class="no">RESPONSE</span>, <span class="kw">id</span> <span class="kw">=</span> <span class="no">ID</span>,
-                            <span class="kw">grp_id</span> <span class="kw">=</span> <span class="no">GRP_ID</span>,
-                            <span class="kw">integer_grp_id</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">primary_psw</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html">map</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">psweight</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">[</span><span class="va">x</span><span class="op">$</span><span class="va">method</span> <span class="op">==</span> <span class="st">"iptw_att_trim"</span>, <span class="op">]</span><span class="op">)</span>
+<span class="va">primary_ate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/surv_ate.html">map_surv_ate</a></span><span class="op">(</span><span class="va">primary_psw</span>, ydata_list <span class="op">=</span> <span class="va">y_list</span>,
+                            response <span class="op">=</span> <span class="va">RESPONSE</span>, id <span class="op">=</span> <span class="va">ID</span>,
+                            grp_id <span class="op">=</span> <span class="va">GRP_ID</span>,
+                            integer_grp_id <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="hazard-ratios" class="section level2">
 <h2 class="hasAnchor">
 <a href="#hazard-ratios" class="anchor"></a>Hazard ratios</h2>
 <p>We plot the estimated hazard ratios for each analysis against the benchmarks from the RCT. Perfect estimates are those lat lie on the dotted 45 degree line.</p>
-<div class="sourceCode" id="cb9"><html><body><pre class="r"><span class="no">primary_hr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span>(<span class="no">primary_ate</span>, <span class="kw">benchmarks</span> <span class="kw">=</span> <span class="no">rct_hr</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">primary_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">primary_hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span><span class="op">(</span><span class="va">primary_ate</span>, benchmarks <span class="op">=</span> <span class="va">rct_hr</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">primary_hr</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/primaryHr-1.png" width="768"></p>
 <p>Hazard ratios and 95 percent confidence intervals estimated using each propensity score method are also displayed in the table below.</p>
-<div class="sourceCode" id="cb10"><html><body><pre class="r"><span class="fu"><a href="../reference/html_table.html">html_table</a></span>(<span class="no">primary_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/html_table.html">html_table</a></span><span class="op">(</span><span class="va">primary_hr</span><span class="op">)</span></code></pre></div>
 <table class="table table table-striped table-responsive">
 <thead><tr>
 <th style="text-align:right;">
@@ -268,7 +276,7 @@ treat
 0.88 (0.72-1.07)
 </td>
 <td style="text-align:left;">
-0.90 (0.61-1.33)
+0.89 (0.59-1.34)
 </td>
 </tr>
 <tr>
@@ -282,7 +290,7 @@ treat
 0.89 (0.55-1.46)
 </td>
 <td style="text-align:left;">
-1.47 (1.05-2.06)
+1.47 (1.05-2.05)
 </td>
 </tr>
 <tr>
@@ -324,7 +332,7 @@ treat
 1.08 (0.52-2.21)
 </td>
 <td style="text-align:left;">
-0.75 (0.44-1.28)
+0.76 (0.44-1.29)
 </td>
 </tr>
 <tr>
@@ -338,7 +346,7 @@ treat
 1.03 (0.75-1.41)
 </td>
 <td style="text-align:left;">
-0.92 (0.73-1.16)
+0.92 (0.73-1.15)
 </td>
 </tr>
 <tr>
@@ -352,7 +360,7 @@ treat
 1.04 (0.72-1.50)
 </td>
 <td style="text-align:left;">
-0.86 (0.66-1.11)
+0.86 (0.66-1.12)
 </td>
 </tr>
 <tr>
@@ -366,7 +374,7 @@ treat
 1.27 (0.75-2.15)
 </td>
 <td style="text-align:left;">
-1.09 (0.80-1.48)
+1.09 (0.80-1.49)
 </td>
 </tr>
 <tr>
@@ -380,7 +388,7 @@ treat
 0.79 (0.63-0.97)
 </td>
 <td style="text-align:left;">
-0.65 (0.46-0.93)
+0.64 (0.45-0.91)
 </td>
 </tr>
 <tr>
@@ -394,7 +402,7 @@ treat
 0.87 (0.72-1.04)
 </td>
 <td style="text-align:left;">
-0.75 (0.62-0.90)
+0.75 (0.62-0.91)
 </td>
 </tr>
 <tr>
@@ -408,7 +416,7 @@ treat
 0.87 (0.71-1.06)
 </td>
 <td style="text-align:left;">
-0.86 (0.74-1.01)
+0.86 (0.73-1.01)
 </td>
 </tr>
 </tbody>
@@ -418,7 +426,8 @@ treat
 <h2 class="hasAnchor">
 <a href="#survival-curves" class="anchor"></a>Survival curves</h2>
 <p>We also plot survival curves, which can be compared to the survival curves from the RCT above and used as an informal assessment of potential non-proportional hazards. In the next vignette, we will compare survival between the external and trial controls, which will provide a more direct test of the compatibility of the external control.</p>
-<div class="sourceCode" id="cb11"><html><body><pre class="r"><span class="fu">plot_survival</span>(<span class="no">primary_ate</span>, <span class="kw">method</span> <span class="kw">=</span> <span class="st">"iptw_att_trim"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">plot_survival</span><span class="op">(</span><span class="va">primary_ate</span>, method <span class="op">=</span> <span class="st">"iptw_att_trim"</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/primarySurv-1.png" width="768"></p>
 </div>
 </div>
@@ -430,15 +439,18 @@ treat
 <h2 class="hasAnchor">
 <a href="#propensity-score-methods" class="anchor"></a>Propensity score methods</h2>
 <p>The first sensitivty analysis assess the importance of difference propensity score methods.</p>
-<div class="sourceCode" id="cb12"><html><body><pre class="r"><span class="no">psmethods_ate</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/surv_ate.html">map_surv_ate</a></span>(<span class="no">analysis</span>$<span class="no">psweight</span>, <span class="kw">ydata_list</span> <span class="kw">=</span> <span class="no">y_list</span>,
-                              <span class="kw">response</span> <span class="kw">=</span> <span class="no">RESPONSE</span>, <span class="kw">id</span> <span class="kw">=</span> <span class="no">ID</span>,
-                              <span class="kw">grp_id</span> <span class="kw">=</span> <span class="no">GRP_ID</span>,
-                              <span class="kw">integer_grp_id</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">psmethods_ate</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/surv_ate.html">map_surv_ate</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">psweight</span>, ydata_list <span class="op">=</span> <span class="va">y_list</span>,
+                              response <span class="op">=</span> <span class="va">RESPONSE</span>, id <span class="op">=</span> <span class="va">ID</span>,
+                              grp_id <span class="op">=</span> <span class="va">GRP_ID</span>,
+                              integer_grp_id <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <p>We compare the estimated and benchmark hazard ratios across the difference methodologies.</p>
-<div class="sourceCode" id="cb13"><html><body><pre class="r"><span class="no">psmethods_hr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span>(<span class="no">psmethods_ate</span>, <span class="kw">benchmarks</span> <span class="kw">=</span> <span class="no">rct_hr</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">psmethods_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">psmethods_hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span><span class="op">(</span><span class="va">psmethods_ate</span>, benchmarks <span class="op">=</span> <span class="va">rct_hr</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">psmethods_hr</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/psMethodsHr-1.png" width="768"></p>
-<div class="sourceCode" id="cb14"><html><body><pre class="r"><span class="fu"><a href="../reference/html_table.html">html_table</a></span>(<span class="no">psmethods_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/html_table.html">html_table</a></span><span class="op">(</span><span class="va">psmethods_hr</span><span class="op">)</span></code></pre></div>
 <table class="table table table-striped table-responsive">
 <thead><tr>
 <th style="text-align:right;">
@@ -484,7 +496,7 @@ treat
 0.73 (0.62-0.86)
 </td>
 <td style="text-align:left;">
-0.80 (0.46-1.39)
+0.81 (0.46-1.41)
 </td>
 <td style="text-align:left;">
 0.58 (0.48-0.69)
@@ -499,7 +511,7 @@ treat
 0.56 (0.48-0.66)
 </td>
 <td style="text-align:left;">
-0.60 (0.49-0.72)
+0.59 (0.49-0.71)
 </td>
 <td style="text-align:left;">
 0.55 (0.47-0.64)
@@ -522,16 +534,16 @@ treat
 0.54 (0.41-0.71)
 </td>
 <td style="text-align:left;">
-0.61 (0.45-0.82)
+0.60 (0.43-0.85)
 </td>
 <td style="text-align:left;">
-0.73 (0.49-1.09)
+0.74 (0.50-1.09)
 </td>
 <td style="text-align:left;">
-0.53 (0.38-0.73)
+0.55 (0.40-0.75)
 </td>
 <td style="text-align:left;">
-0.54 (0.39-0.75)
+0.54 (0.39-0.76)
 </td>
 <td style="text-align:left;">
 0.56 (0.44-0.72)
@@ -554,16 +566,16 @@ treat
 0.71 (0.58-0.87)
 </td>
 <td style="text-align:left;">
-0.69 (0.56-0.86)
+0.70 (0.56-0.87)
 </td>
 <td style="text-align:left;">
 0.70 (0.55-0.89)
 </td>
 <td style="text-align:left;">
-0.69 (0.56-0.87)
+0.68 (0.54-0.85)
 </td>
 <td style="text-align:left;">
-0.66 (0.53-0.83)
+0.67 (0.53-0.84)
 </td>
 <td style="text-align:left;">
 0.67 (0.55-0.81)
@@ -580,22 +592,22 @@ treat
 0.88 (0.72-1.07)
 </td>
 <td style="text-align:left;">
-0.99 (0.65-1.51)
+0.94 (0.59-1.49)
 </td>
 <td style="text-align:left;">
-0.90 (0.61-1.33)
+0.89 (0.59-1.34)
 </td>
 <td style="text-align:left;">
-0.83 (0.67-1.01)
+0.83 (0.68-1.02)
 </td>
 <td style="text-align:left;">
-1.15 (0.76-1.74)
+1.16 (0.74-1.84)
 </td>
 <td style="text-align:left;">
-0.86 (0.69-1.06)
+0.85 (0.69-1.05)
 </td>
 <td style="text-align:left;">
-0.92 (0.63-1.33)
+0.92 (0.62-1.38)
 </td>
 <td style="text-align:left;">
 0.81 (0.68-0.96)
@@ -615,19 +627,19 @@ treat
 1.46 (1.04-2.04)
 </td>
 <td style="text-align:left;">
-1.47 (1.05-2.06)
+1.47 (1.05-2.05)
 </td>
 <td style="text-align:left;">
-1.98 (1.04-3.77)
+1.93 (1.08-3.43)
 </td>
 <td style="text-align:left;">
-1.76 (0.96-3.23)
+1.53 (0.85-2.76)
 </td>
 <td style="text-align:left;">
-1.48 (0.78-2.83)
+1.65 (0.94-2.92)
 </td>
 <td style="text-align:left;">
-1.47 (0.78-2.74)
+1.45 (0.83-2.53)
 </td>
 <td style="text-align:left;">
 1.39 (0.99-1.95)
@@ -644,22 +656,22 @@ treat
 1.38 (0.75-2.56)
 </td>
 <td style="text-align:left;">
-1.13 (0.73-1.76)
+1.13 (0.73-1.75)
 </td>
 <td style="text-align:left;">
 1.12 (0.72-1.74)
 </td>
 <td style="text-align:left;">
-1.08 (0.61-1.92)
+1.02 (0.58-1.80)
 </td>
 <td style="text-align:left;">
-1.10 (0.62-1.96)
+1.07 (0.62-1.85)
 </td>
 <td style="text-align:left;">
-1.32 (0.65-2.66)
+1.17 (0.64-2.13)
 </td>
 <td style="text-align:left;">
-1.15 (0.61-2.18)
+1.26 (0.67-2.36)
 </td>
 <td style="text-align:left;">
 1.14 (0.74-1.77)
@@ -682,16 +694,16 @@ treat
 1.34 (0.94-1.91)
 </td>
 <td style="text-align:left;">
-1.27 (0.76-2.14)
+1.32 (0.72-2.41)
 </td>
 <td style="text-align:left;">
-1.26 (0.68-2.33)
+1.15 (0.68-1.97)
 </td>
 <td style="text-align:left;">
-1.57 (0.82-2.99)
+1.41 (0.76-2.63)
 </td>
 <td style="text-align:left;">
-1.47 (0.80-2.72)
+1.46 (0.71-3.00)
 </td>
 <td style="text-align:left;">
 1.16 (0.84-1.61)
@@ -708,22 +720,22 @@ treat
 1.08 (0.52-2.21)
 </td>
 <td style="text-align:left;">
-0.74 (0.43-1.26)
+0.74 (0.44-1.27)
 </td>
 <td style="text-align:left;">
-0.75 (0.44-1.28)
+0.76 (0.44-1.29)
 </td>
 <td style="text-align:left;">
-0.62 (0.32-1.20)
+0.56 (0.29-1.09)
 </td>
 <td style="text-align:left;">
-0.71 (0.36-1.43)
+0.72 (0.36-1.45)
 </td>
 <td style="text-align:left;">
-0.82 (0.41-1.65)
+0.66 (0.31-1.42)
 </td>
 <td style="text-align:left;">
-0.84 (0.41-1.72)
+0.73 (0.37-1.44)
 </td>
 <td style="text-align:left;">
 0.74 (0.43-1.27)
@@ -743,19 +755,19 @@ treat
 0.92 (0.73-1.15)
 </td>
 <td style="text-align:left;">
-0.92 (0.73-1.16)
+0.92 (0.73-1.15)
 </td>
 <td style="text-align:left;">
-0.95 (0.69-1.33)
+0.93 (0.67-1.30)
 </td>
 <td style="text-align:left;">
-0.94 (0.68-1.31)
+0.93 (0.66-1.30)
 </td>
 <td style="text-align:left;">
-0.99 (0.71-1.39)
+0.92 (0.58-1.46)
 </td>
 <td style="text-align:left;">
-0.97 (0.68-1.39)
+0.95 (0.67-1.35)
 </td>
 <td style="text-align:left;">
 0.98 (0.79-1.20)
@@ -772,22 +784,22 @@ treat
 1.04 (0.72-1.50)
 </td>
 <td style="text-align:left;">
-0.84 (0.64-1.09)
+0.84 (0.65-1.09)
 </td>
 <td style="text-align:left;">
-0.86 (0.66-1.11)
+0.86 (0.66-1.12)
 </td>
 <td style="text-align:left;">
-0.96 (0.66-1.41)
+0.97 (0.65-1.47)
 </td>
 <td style="text-align:left;">
-1.05 (0.70-1.58)
+1.03 (0.71-1.50)
 </td>
 <td style="text-align:left;">
-0.79 (0.49-1.29)
+0.88 (0.54-1.43)
 </td>
 <td style="text-align:left;">
-0.91 (0.59-1.41)
+0.95 (0.60-1.51)
 </td>
 <td style="text-align:left;">
 0.88 (0.69-1.13)
@@ -807,19 +819,19 @@ treat
 1.07 (0.79-1.47)
 </td>
 <td style="text-align:left;">
-1.09 (0.80-1.48)
+1.09 (0.80-1.49)
 </td>
 <td style="text-align:left;">
-1.06 (0.67-1.67)
+1.07 (0.69-1.65)
 </td>
 <td style="text-align:left;">
-1.09 (0.68-1.74)
+1.18 (0.76-1.85)
 </td>
 <td style="text-align:left;">
-1.02 (0.63-1.64)
+0.90 (0.55-1.45)
 </td>
 <td style="text-align:left;">
-0.95 (0.60-1.50)
+0.96 (0.63-1.47)
 </td>
 <td style="text-align:left;">
 1.11 (0.82-1.51)
@@ -836,22 +848,22 @@ treat
 0.79 (0.63-0.97)
 </td>
 <td style="text-align:left;">
-0.47 (0.30-0.75)
+0.47 (0.29-0.75)
 </td>
 <td style="text-align:left;">
-0.65 (0.46-0.93)
+0.64 (0.45-0.91)
 </td>
 <td style="text-align:left;">
-0.66 (0.45-0.98)
+0.68 (0.46-0.99)
 </td>
 <td style="text-align:left;">
-0.68 (0.44-1.04)
+0.66 (0.44-1.00)
 </td>
 <td style="text-align:left;">
-0.69 (0.46-1.05)
+0.67 (0.44-1.03)
 </td>
 <td style="text-align:left;">
-0.69 (0.46-1.05)
+0.67 (0.44-1.03)
 </td>
 <td style="text-align:left;">
 0.61 (0.46-0.81)
@@ -868,22 +880,22 @@ treat
 0.87 (0.72-1.04)
 </td>
 <td style="text-align:left;">
-0.79 (0.64-0.99)
-</td>
-<td style="text-align:left;">
-0.75 (0.62-0.90)
-</td>
-<td style="text-align:left;">
-0.79 (0.66-0.95)
-</td>
-<td style="text-align:left;">
 0.80 (0.64-1.00)
+</td>
+<td style="text-align:left;">
+0.75 (0.62-0.91)
 </td>
 <td style="text-align:left;">
 0.80 (0.67-0.96)
 </td>
 <td style="text-align:left;">
-0.78 (0.64-0.96)
+0.82 (0.65-1.03)
+</td>
+<td style="text-align:left;">
+0.79 (0.66-0.95)
+</td>
+<td style="text-align:left;">
+0.77 (0.62-0.97)
 </td>
 <td style="text-align:left;">
 0.80 (0.68-0.95)
@@ -903,19 +915,19 @@ treat
 0.87 (0.74-1.02)
 </td>
 <td style="text-align:left;">
-0.86 (0.74-1.01)
-</td>
-<td style="text-align:left;">
-0.85 (0.69-1.04)
+0.86 (0.73-1.01)
 </td>
 <td style="text-align:left;">
 0.84 (0.68-1.04)
 </td>
 <td style="text-align:left;">
-0.91 (0.71-1.17)
+0.83 (0.65-1.07)
 </td>
 <td style="text-align:left;">
-0.88 (0.72-1.08)
+0.87 (0.70-1.08)
+</td>
+<td style="text-align:left;">
+0.86 (0.69-1.07)
 </td>
 <td style="text-align:left;">
 0.88 (0.75-1.02)
@@ -928,29 +940,35 @@ treat
 <h2 class="hasAnchor">
 <a href="#double-adjustment" class="anchor"></a>Double adjustment</h2>
 <p>Next, we use “double adjustment” to estimate log hazard ratios, which simply includes each term in the propensity score model in the Cox model as well. Note that this results in estimation of a conditional rather than a marginal hazard ratio. We leverage the <code><a href="../reference/update_ate.html">update.surv_ate()</a></code> function to update the analysis above while only modifying the function argument of interest.</p>
-<div class="sourceCode" id="cb15"><html><body><pre class="r"><span class="no">da_ate</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html">update</a></span>(<span class="no">psmethods_ate</span>, <span class="kw">double_adjustment</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
-<pre><code>## Warning in fitter(X, Y, istrat, offset, init, control, weights = weights, :
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">da_ate</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html">update</a></span><span class="op">(</span><span class="va">psmethods_ate</span>, double_adjustment <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<pre><code>## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
 ## Loglik converged before variable 6 ; coefficient may be infinite.
 
-## Warning in fitter(X, Y, istrat, offset, init, control, weights = weights, :
+## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
 ## Loglik converged before variable 6 ; coefficient may be infinite.
 
-## Warning in fitter(X, Y, istrat, offset, init, control, weights = weights, :
+## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
 ## Loglik converged before variable 6 ; coefficient may be infinite.
 
-## Warning in fitter(X, Y, istrat, offset, init, control, weights = weights, :
-## Loglik converged before variable 6 ; coefficient may be infinite.
-
-## Warning in fitter(X, Y, istrat, offset, init, control, weights = weights, :
+## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
 ## Loglik converged before variable 6 ; coefficient may be infinite.</code></pre>
-<pre><code>## Warning in fitter(X, Y, istrat, offset, init, control, weights = weights, :
+<pre><code>## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
 ## Loglik converged before variable 4 ; coefficient may be infinite.
 
-## Warning in fitter(X, Y, istrat, offset, init, control, weights = weights, :
+## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
+## Loglik converged before variable 4 ; coefficient may be infinite.</code></pre>
+<pre><code>## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
+## Ran out of iterations and did not converge</code></pre>
+<pre><code>## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
+## Loglik converged before variable 4 ; coefficient may be infinite.
+
+## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
 ## Loglik converged before variable 4 ; coefficient may be infinite.</code></pre>
 <p>We again compare the estimated and benchmark hazard ratios.</p>
-<div class="sourceCode" id="cb18"><html><body><pre class="r"><span class="no">da_hr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span>(<span class="no">da_ate</span>, <span class="kw">benchmarks</span> <span class="kw">=</span> <span class="no">rct_hr</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">da_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">da_hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span><span class="op">(</span><span class="va">da_ate</span>, benchmarks <span class="op">=</span> <span class="va">rct_hr</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">da_hr</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/doubleAdjustmentHr-1.png" width="768"></p>
 </div>
 <div id="interaction-terms-in-the-propensity-score-model" class="section level2">
@@ -958,14 +976,15 @@ treat
 <a href="#interaction-terms-in-the-propensity-score-model" class="anchor"></a>Interaction terms in the propensity score model</h2>
 <p>An additional sensitivity analysis modifies the specification of the propensity score model by interacting the number of days since diagnosis with cancer stage (early or advanced). Since we have modeled the propensity score model, we re-impute the data (including the new interaction term in the imputation model) and all propensity score modeling steps. A complete propensity score pipeline including estimation of ATEs can be performed with <code><a href="../reference/ps_surv.html">ps_surv()</a></code> and we can iterate over groups with <code><a href="../reference/ps_surv.html">map_ps_surv()</a></code>. Note that we don’t perform genetic matching here due to its slow run time.</p>
 <p>These less parsimonious model results in predicted propensity scores that are either 0 or 1 as noted by the warning below, a violation of the strongly ignorable treatment assignment (SITA) assumption requiring each patient to have a nonzero probability of receiving either treatment.</p>
-<div class="sourceCode" id="cb19"><html><body><pre class="r"><span class="no">ec_rct1_list</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span>(<span class="no">ec_rct1</span>, <span class="no">analysis_num</span>)
-<span class="no">ps_form_interaction</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span>(<span class="kw">spline</span> <span class="kw">=</span> <span class="fl">FALSE</span>, <span class="kw">interaction</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
-<span class="no">interaction_ps_surv</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/ps_surv.html">map_ps_surv</a></span>(<span class="no">ec_rct1_list</span>,
-                                   <span class="kw">formula</span> <span class="kw">=</span> <span class="no">ps_form_interaction</span>,
-                                   <span class="kw">ydata_list</span> <span class="kw">=</span> <span class="no">y_list</span>,
-                                   <span class="kw">response</span> <span class="kw">=</span> <span class="no">RESPONSE</span>,
-                                   <span class="kw">id</span> <span class="kw">=</span> <span class="no">ID</span>, <span class="kw">grp_id</span> <span class="kw">=</span> <span class="no">GRP_ID</span>,
-                                   <span class="kw">integer_grp_id</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ec_rct1_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span><span class="op">(</span><span class="va">ec_rct1</span>, <span class="va">analysis_num</span><span class="op">)</span>
+<span class="va">ps_form_interaction</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span><span class="op">(</span>spline <span class="op">=</span> <span class="cn">FALSE</span>, interaction <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">interaction_ps_surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ps_surv.html">map_ps_surv</a></span><span class="op">(</span><span class="va">ec_rct1_list</span>, 
+                                   formula <span class="op">=</span> <span class="va">ps_form_interaction</span>, 
+                                   ydata_list <span class="op">=</span> <span class="va">y_list</span>,
+                                   response <span class="op">=</span> <span class="va">RESPONSE</span>,
+                                   id <span class="op">=</span> <span class="va">ID</span>, grp_id <span class="op">=</span> <span class="va">GRP_ID</span>,
+                                   integer_grp_id <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
@@ -985,16 +1004,18 @@ treat
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<div class="sourceCode" id="cb21"><html><body><pre class="r"><span class="no">interaction_hr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span>(<span class="no">interaction_ps_surv</span>$<span class="no">ate</span>, <span class="kw">benchmarks</span> <span class="kw">=</span> <span class="no">rct_hr</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">interaction_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">interaction_hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span><span class="op">(</span><span class="va">interaction_ps_surv</span><span class="op">$</span><span class="va">ate</span>, benchmarks <span class="op">=</span> <span class="va">rct_hr</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">interaction_hr</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/interactionHR-1.png" width="768"></p>
 </div>
 <div id="splines-in-the-propensity-score-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#splines-in-the-propensity-score-model" class="anchor"></a>Splines in the propensity score model</h2>
 <p>We also modified the specification of the propensity score to include splines for the continuous covariates (age only), while removing the interaction term. Similar to above, we leverage the <code><a href="../reference/update_ate.html">update.grouped_ps_surv()</a></code> function to restimate <code><a href="../reference/ps_surv.html">map_ps_surv()</a></code> while only modifying one argument (the propensity score model formula). This again results in some overfitting of the propensity score model.</p>
-<div class="sourceCode" id="cb22"><html><body><pre class="r"><span class="no">ps_form_splines</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span>(<span class="kw">spline</span> <span class="kw">=</span> <span class="fl">TRUE</span>, <span class="kw">interaction</span> <span class="kw">=</span> <span class="fl">FALSE</span>)
-<span class="no">splines_ps_surv</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html">update</a></span>(<span class="no">interaction_ps_surv</span>, <span class="kw">formula</span> <span class="kw">=</span> <span class="no">ps_form_splines</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ps_form_splines</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span><span class="op">(</span>spline <span class="op">=</span> <span class="cn">TRUE</span>, interaction <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<span class="va">splines_ps_surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html">update</a></span><span class="op">(</span><span class="va">interaction_ps_surv</span>, formula <span class="op">=</span> <span class="va">ps_form_splines</span><span class="op">)</span></code></pre></div>
 <pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
@@ -1044,20 +1065,20 @@ treat
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<div class="sourceCode" id="cb24"><html><body><pre class="r"><span class="no">splines_hr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span>(<span class="no">splines_ps_surv</span>$<span class="no">ate</span>, <span class="kw">benchmarks</span> <span class="kw">=</span> <span class="no">rct_hr</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">splines_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">splines_hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span><span class="op">(</span><span class="va">splines_ps_surv</span><span class="op">$</span><span class="va">ate</span>, benchmarks <span class="op">=</span> <span class="va">rct_hr</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">splines_hr</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/splinesHr-1.png" width="768"></p>
 </div>
 <div id="splines-and-interaction-terms-in-the-propensity-score-model" class="section level2">
 <h2 class="hasAnchor">
 <a href="#splines-and-interaction-terms-in-the-propensity-score-model" class="anchor"></a>Splines and interaction terms in the propensity score model</h2>
 <p>In a final check of the specification of the propensity score model, we include both splines and interaction terms, which not surprisingly results in predicted propensity scores of 0 and 1.</p>
-<div class="sourceCode" id="cb25"><html><body><pre class="r"><span class="no">ps_form_splines_interaction</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span>(<span class="kw">spline</span> <span class="kw">=</span> <span class="fl">TRUE</span>, <span class="kw">interaction</span> <span class="kw">=</span> <span class="fl">TRUE</span>)
-<span class="no">splines_interaction_ps_surv</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html">update</a></span>(<span class="no">interaction_ps_surv</span>,
-                                      <span class="kw">formula</span> <span class="kw">=</span> <span class="no">ps_form_splines_interaction</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">ps_form_splines_interaction</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span><span class="op">(</span>spline <span class="op">=</span> <span class="cn">TRUE</span>, interaction <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>
+<span class="va">splines_interaction_ps_surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html">update</a></span><span class="op">(</span><span class="va">interaction_ps_surv</span>, 
+                                      formula <span class="op">=</span> <span class="va">ps_form_splines_interaction</span><span class="op">)</span></code></pre></div>
 <pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
@@ -1097,46 +1118,48 @@ treat
 <pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
 <pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
+<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading
+
+## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
+## prediction from a rank-deficient fit may be misleading</code></pre>
+<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
+## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
+
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
 <pre><code>## Warning: glm.fit: algorithm did not converge</code></pre>
-<pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
-## prediction from a rank-deficient fit may be misleading
-
-## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
-## prediction from a rank-deficient fit may be misleading
-
-## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
-## prediction from a rank-deficient fit may be misleading
-
-## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
-## prediction from a rank-deficient fit may be misleading
-
-## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
-## prediction from a rank-deficient fit may be misleading</code></pre>
 <pre><code>## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
-
-## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
@@ -1146,9 +1169,6 @@ treat
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
 <pre><code>## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
-## prediction from a rank-deficient fit may be misleading
-
-## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
 ## prediction from a rank-deficient fit may be misleading
 
 ## Warning in predict.lm(object, newdata, se.fit, scale = 1, type = if (type == :
@@ -1168,21 +1188,24 @@ treat
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred
 
 ## Warning: glm.fit: fitted probabilities numerically 0 or 1 occurred</code></pre>
-<div class="sourceCode" id="cb35"><html><body><pre class="r"><span class="no">splines_interaction_hr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span>(<span class="no">splines_interaction_ps_surv</span>$<span class="no">ate</span>,
-                                                  <span class="kw">benchmarks</span> <span class="kw">=</span> <span class="no">rct_hr</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">splines_interaction_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">splines_interaction_hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span><span class="op">(</span><span class="va">splines_interaction_ps_surv</span><span class="op">$</span><span class="va">ate</span>,
+                                                  benchmarks <span class="op">=</span> <span class="va">rct_hr</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">splines_interaction_hr</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/splinesInteractionHr-1.png" width="768"></p>
 </div>
 <div id="missing-indicators" class="section level2">
 <h2 class="hasAnchor">
 <a href="#missing-indicators" class="anchor"></a>Missing indicators</h2>
 <p>Finally, we assessed whether combining multiple imputation with indicator variables for missing observations could <a href="https://doi.org/10.1186/s12874-020-01068-x">reduce bias</a>. An indicator variable was created for each variable with at least one missing observation (prior to imputation) and given a value of 1 if it was missing and 0 otherwise.</p>
-<div class="sourceCode" id="cb36"><html><body><pre class="r"><span class="no">missing_indicator_ps_surv</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html">update</a></span>(<span class="no">interaction_ps_surv</span>,
-                                    <span class="kw">formula</span> <span class="kw">=</span> <span class="no">analysis</span>$<span class="no">ps_formula</span>,
-                                    <span class="kw">missing_dummy</span> <span class="kw">=</span> <span class="fl">TRUE</span>)</pre></body></html></div>
-<div class="sourceCode" id="cb37"><html><body><pre class="r"><span class="no">missing_indicator_hr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span>(<span class="no">missing_indicator_ps_surv</span>$<span class="no">ate</span>,
-                                                <span class="kw">benchmarks</span> <span class="kw">=</span> <span class="no">rct_hr</span>)
-<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span>(<span class="no">missing_indicator_hr</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">missing_indicator_ps_surv</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/update.html">update</a></span><span class="op">(</span><span class="va">interaction_ps_surv</span>, 
+                                    formula <span class="op">=</span> <span class="va">analysis</span><span class="op">$</span><span class="va">ps_formula</span>,
+                                    missing_dummy <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">missing_indicator_hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/benchmark_hazard_ratios.html">benchmark_hazard_ratios</a></span><span class="op">(</span><span class="va">missing_indicator_ps_surv</span><span class="op">$</span><span class="va">ate</span>, 
+                                                benchmarks <span class="op">=</span> <span class="va">rct_hr</span><span class="op">)</span>
+<span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html">autoplot</a></span><span class="op">(</span><span class="va">missing_indicator_hr</span><span class="op">)</span></code></pre></div>
 <p><img src="04-ate-trt-ec_files/figure-html/missingIndicatorHr-1.png" width="768"></p>
 </div>
 </div>
@@ -1190,8 +1213,9 @@ treat
 <h1 class="hasAnchor">
 <a href="#summary-of-primary-and-sensitivity-analyses" class="anchor"></a>Summary of primary and sensitivity analyses</h1>
 <p>Finally, we combine the hazard ratios across both the primary and the sensitivity analyses. We summarize the estimates across 14 pairwise comparisons by computing the root mean square error (RMSE) in comparisons of the estimated hazard ratios and RCT benchmarks. The “unadjusted” estimates surprisingly perform the best.</p>
-<div class="sourceCode" id="cb38"><html><body><pre class="r"><span class="no">sensitivity_lookup</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/reexports.html">tribble</a></span>(
-   ~<span class="no">id</span>, ~<span class="no">Type</span>,  ~<span class="no">`PS specification`</span>, ~<span class="no">`Double adjustment`</span>, ~<span class="no">`Missing data`</span>,
+<div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">sensitivity_lookup</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html">tribble</a></span><span class="op">(</span>
+   <span class="op">~</span><span class="va">id</span>, <span class="op">~</span><span class="va">Type</span>,  <span class="op">~</span><span class="va">`PS specification`</span>, <span class="op">~</span><span class="va">`Double adjustment`</span>, <span class="op">~</span><span class="va">`Missing data`</span>,
    <span class="st">"1"</span>, <span class="st">"Primary"</span>, <span class="st">"No interaction or splines"</span>, <span class="st">"No"</span>, <span class="st">"Multiple imputation"</span>,
    <span class="st">"2"</span>, <span class="st">"Sensitivty"</span>, <span class="st">"No interaction or splines"</span>, <span class="st">"No"</span>, <span class="st">"Multiple imputation"</span>,
    <span class="st">"3"</span>, <span class="st">"Sensitivty"</span>, <span class="st">"No interaction or splines"</span>, <span class="st">"Yes"</span>, <span class="st">"Multiple imputation"</span>,
@@ -1199,33 +1223,33 @@ treat
    <span class="st">"5"</span>, <span class="st">"Sensitivty"</span>, <span class="st">"Splines and no interaction"</span>, <span class="st">"No"</span>, <span class="st">"Multiple imputation"</span>,
    <span class="st">"6"</span>, <span class="st">"Sensitivty"</span>, <span class="st">"Splines and interaction"</span>, <span class="st">"No"</span>, <span class="st">"Multiple imputation"</span>,
    <span class="st">"7"</span>, <span class="st">"Sensitivty"</span>, <span class="st">"No interaction or splines"</span>, <span class="st">"No"</span>, <span class="st">"Multiple imputation + missing indicator"</span>
-)
+<span class="op">)</span>
 
-<span class="no">hr</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span>(
-  <span class="kw">`1`</span> <span class="kw">=</span> <span class="no">primary_hr</span>,
-  <span class="kw">`2`</span> <span class="kw">=</span> <span class="no">psmethods_hr</span> <span class="kw">%&gt;%</span>
-    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span>(<span class="no">method</span> <span class="kw">!=</span> <span class="st">"iptw_att_trim"</span>),
-  <span class="kw">`3`</span> <span class="kw">=</span> <span class="no">da_hr</span>,
-  <span class="kw">`4`</span> <span class="kw">=</span> <span class="no">interaction_hr</span>,
-  <span class="kw">`5`</span> <span class="kw">=</span> <span class="no">splines_hr</span>,
-  <span class="kw">`6`</span> <span class="kw">=</span> <span class="no">splines_interaction_hr</span>,
-  <span class="kw">`7`</span> <span class="kw">=</span> <span class="no">missing_indicator_hr</span>
-) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span>(<span class="kw">.id</span> <span class="kw">=</span> <span class="st">"id"</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">left_join</a></span>(<span class="no">sensitivity_lookup</span>, <span class="kw">by</span> <span class="kw">=</span> <span class="st">"id"</span>)
+<span class="va">hr</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html">list</a></span><span class="op">(</span>
+  `1` <span class="op">=</span> <span class="va">primary_hr</span>,
+  `2` <span class="op">=</span> <span class="va">psmethods_hr</span> <span class="op">%&gt;%</span> 
+    <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="va">method</span> <span class="op">!=</span> <span class="st">"iptw_att_trim"</span><span class="op">)</span>, 
+  `3` <span class="op">=</span> <span class="va">da_hr</span>,
+  `4` <span class="op">=</span> <span class="va">interaction_hr</span>,
+  `5` <span class="op">=</span> <span class="va">splines_hr</span>,
+  `6` <span class="op">=</span> <span class="va">splines_interaction_hr</span>,
+  `7` <span class="op">=</span> <span class="va">missing_indicator_hr</span>
+<span class="op">)</span> <span class="op">%&gt;%</span> 
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span><span class="op">(</span>.id <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html">left_join</a></span><span class="op">(</span><span class="va">sensitivity_lookup</span>, by <span class="op">=</span> <span class="st">"id"</span><span class="op">)</span>
 
-<span class="no">rmse</span> <span class="kw">&lt;-</span> <span class="kw">function</span>(<span class="no">estimate</span>, <span class="no">truth</span>) {
-  <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span>((<span class="no">estimate</span> - <span class="no">truth</span>)^<span class="fl">2</span>))
-}
+<span class="va">rmse</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">estimate</span>, <span class="va">truth</span><span class="op">)</span> <span class="op">{</span>
+  <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html">sqrt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/mean.html">mean</a></span><span class="op">(</span><span class="op">(</span><span class="va">estimate</span> <span class="op">-</span> <span class="va">truth</span><span class="op">)</span><span class="op">^</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>
+<span class="op">}</span>
 
-<span class="no">hr</span> <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span>(<span class="no">Type</span>, <span class="no">method</span>, <span class="no">`PS specification`</span>, <span class="no">`Double adjustment`</span>,
-           <span class="no">`Missing data`</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarise</a></span>(<span class="kw">rmse</span> <span class="kw">=</span> <span class="fu">rmse</span>(<span class="no">estimate</span>, <span class="no">benchmark_estimate</span>)) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span>(<span class="kw">method</span> <span class="kw">=</span> <span class="fu"><a href="../reference/label_ps_method.html">label_ps_method</a></span>(<span class="no">method</span>)) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html">arrange</a></span>(<span class="no">rmse</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span>(<span class="kw">`PS method`</span> <span class="kw">=</span> <span class="no">method</span>, <span class="kw">RMSE</span> <span class="kw">=</span> <span class="no">rmse</span>) <span class="kw">%&gt;%</span>
-  <span class="fu"><a href="../reference/html_table.html">html_table</a></span>()</pre></body></html></div>
+<span class="va">hr</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_by.html">group_by</a></span><span class="op">(</span><span class="va">Type</span>, <span class="va">method</span>, <span class="va">`PS specification`</span>, <span class="va">`Double adjustment`</span>,
+           <span class="va">`Missing data`</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html">summarise</a></span><span class="op">(</span>rmse <span class="op">=</span> <span class="fu">rmse</span><span class="op">(</span><span class="va">estimate</span>, <span class="va">benchmark_estimate</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html">mutate</a></span><span class="op">(</span>method <span class="op">=</span> <span class="fu"><a href="../reference/label_ps_method.html">label_ps_method</a></span><span class="op">(</span><span class="va">method</span><span class="op">)</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/arrange.html">arrange</a></span><span class="op">(</span><span class="va">rmse</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/rename.html">rename</a></span><span class="op">(</span>`PS method` <span class="op">=</span> <span class="va">method</span>, RMSE <span class="op">=</span> <span class="va">rmse</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/html_table.html">html_table</a></span><span class="op">(</span><span class="op">)</span> </code></pre></div>
 <table class="table table table-striped table-responsive">
 <thead><tr>
 <th style="text-align:left;">
@@ -1265,7 +1289,7 @@ Yes
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.2025656
+0.2023242
 </td>
 </tr>
 <tr>
@@ -1365,7 +1389,7 @@ No
 Multiple imputation + missing indicator
 </td>
 <td style="text-align:right;">
-0.2254796
+0.2243540
 </td>
 </tr>
 <tr>
@@ -1385,7 +1409,7 @@ No
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.2259128
+0.2247665
 </td>
 </tr>
 <tr>
@@ -1405,7 +1429,7 @@ No
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.2304201
+0.2301874
 </td>
 </tr>
 <tr>
@@ -1425,7 +1449,7 @@ No
 Multiple imputation + missing indicator
 </td>
 <td style="text-align:right;">
-0.2332152
+0.2331015
 </td>
 </tr>
 <tr>
@@ -1445,7 +1469,7 @@ No
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.2347108
+0.2331830
 </td>
 </tr>
 <tr>
@@ -1465,227 +1489,7 @@ Yes
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.2364089
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-Nearest neighbor matching
-</td>
-<td style="text-align:left;">
-No interaction or splines
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2402609
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-Nearest neighbor matching (caliper)
-</td>
-<td style="text-align:left;">
-No interaction or splines
-</td>
-<td style="text-align:left;">
-Yes
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2405032
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-IPTW-ATT
-</td>
-<td style="text-align:left;">
-No interaction or splines
-</td>
-<td style="text-align:left;">
-Yes
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2411884
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-IPTW-ATT (trim)
-</td>
-<td style="text-align:left;">
-Splines and no interaction
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2417960
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-IPTW-ATT (trim)
-</td>
-<td style="text-align:left;">
-Splines and interaction
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2498571
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-Nearest neighbor matching
-</td>
-<td style="text-align:left;">
-No interaction or splines
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation + missing indicator
-</td>
-<td style="text-align:right;">
-0.2510553
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-IPTW-ATT
-</td>
-<td style="text-align:left;">
-Splines and no interaction
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2529553
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-IPTW-ATT
-</td>
-<td style="text-align:left;">
-Splines and interaction
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2561605
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-Nearest neighbor matching (caliper)
-</td>
-<td style="text-align:left;">
-Splines and no interaction
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2679622
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-Nearest neighbor matching (caliper)
-</td>
-<td style="text-align:left;">
-No interaction or splines
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation + missing indicator
-</td>
-<td style="text-align:right;">
-0.2705554
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-Nearest neighbor matching
-</td>
-<td style="text-align:left;">
-No interaction or splines
-</td>
-<td style="text-align:left;">
-Yes
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.2833022
+0.2336454
 </td>
 </tr>
 <tr>
@@ -1705,7 +1509,47 @@ No
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.2836149
+0.2338702
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+IPTW-ATT
+</td>
+<td style="text-align:left;">
+No interaction or splines
+</td>
+<td style="text-align:left;">
+Yes
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.2379320
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+IPTW-ATT (trim)
+</td>
+<td style="text-align:left;">
+Splines and no interaction
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.2418070
 </td>
 </tr>
 <tr>
@@ -1714,6 +1558,26 @@ Sensitivty
 </td>
 <td style="text-align:left;">
 Nearest neighbor matching (caliper)
+</td>
+<td style="text-align:left;">
+No interaction or splines
+</td>
+<td style="text-align:left;">
+Yes
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.2439931
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+IPTW-ATT (trim)
 </td>
 <td style="text-align:left;">
 Splines and interaction
@@ -1725,7 +1589,127 @@ No
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.2877826
+0.2469538
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+IPTW-ATT
+</td>
+<td style="text-align:left;">
+Splines and no interaction
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.2526150
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+IPTW-ATT
+</td>
+<td style="text-align:left;">
+Splines and interaction
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.2546834
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+Nearest neighbor matching (caliper)
+</td>
+<td style="text-align:left;">
+No interaction or splines
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation + missing indicator
+</td>
+<td style="text-align:right;">
+0.2558140
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+Nearest neighbor matching
+</td>
+<td style="text-align:left;">
+No interaction or splines
+</td>
+<td style="text-align:left;">
+Yes
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.2674952
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+Nearest neighbor matching
+</td>
+<td style="text-align:left;">
+No interaction or splines
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation + missing indicator
+</td>
+<td style="text-align:right;">
+0.2683666
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+Nearest neighbor matching (caliper)
+</td>
+<td style="text-align:left;">
+Splines and no interaction
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.2733221
 </td>
 </tr>
 <tr>
@@ -1745,47 +1729,7 @@ No
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.3030620
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-Nearest neighbor matching
-</td>
-<td style="text-align:left;">
-Splines and interaction
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.3188547
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Sensitivty
-</td>
-<td style="text-align:left;">
-Genetic matching
-</td>
-<td style="text-align:left;">
-No interaction or splines
-</td>
-<td style="text-align:left;">
-No
-</td>
-<td style="text-align:left;">
-Multiple imputation
-</td>
-<td style="text-align:right;">
-0.3421645
+0.2748839
 </td>
 </tr>
 <tr>
@@ -1805,7 +1749,87 @@ Yes
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.3446240
+0.2840310
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+Nearest neighbor matching
+</td>
+<td style="text-align:left;">
+No interaction or splines
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.2840818
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+Nearest neighbor matching
+</td>
+<td style="text-align:left;">
+Splines and interaction
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.3209607
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+Genetic matching
+</td>
+<td style="text-align:left;">
+No interaction or splines
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.3398841
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Sensitivty
+</td>
+<td style="text-align:left;">
+Nearest neighbor matching (caliper)
+</td>
+<td style="text-align:left;">
+Splines and interaction
+</td>
+<td style="text-align:left;">
+No
+</td>
+<td style="text-align:left;">
+Multiple imputation
+</td>
+<td style="text-align:right;">
+0.3551631
 </td>
 </tr>
 <tr>
@@ -1825,7 +1849,7 @@ Yes
 Multiple imputation
 </td>
 <td style="text-align:right;">
-0.3981428
+0.3824202
 </td>
 </tr>
 </tbody>
@@ -1834,10 +1858,11 @@ Multiple imputation
 <div id="save-results" class="section level1">
 <h1 class="hasAnchor">
 <a href="#save-results" class="anchor"></a>Save results</h1>
-<div class="sourceCode" id="cb39"><html><body><pre class="r"><span class="no">analysis</span>$<span class="no">loghr_trt_ic</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html">split</a></span>(<span class="no">rct_loghr</span>[, -<span class="fl">1</span>], <span class="no">rct_loghr</span>$<span class="no">analysis_num</span>)
-<span class="no">analysis</span>$<span class="no">loghr_trt_ec</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span>(<span class="fu"><a href="https://rdrr.io/r/base/unname.html">unname</a></span>(<span class="no">primary_ate</span>$<span class="no">loghr</span>), <span class="co"># Remove term column</span>
-                                <span class="kw">function</span>(<span class="no">x</span>) <span class="no">x</span>[, !<span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span>(<span class="no">x</span>) <span class="kw">==</span> <span class="st">"term"</span>])
-<span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">saveRDS</a></span>(<span class="no">analysis</span>, <span class="st">"analysis-ate-trt-ec.rds"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">analysis</span><span class="op">$</span><span class="va">loghr_trt_ic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/split.html">split</a></span><span class="op">(</span><span class="va">rct_loghr</span><span class="op">[</span>, <span class="op">-</span><span class="fl">1</span><span class="op">]</span>, <span class="va">rct_loghr</span><span class="op">$</span><span class="va">analysis_num</span><span class="op">)</span>
+<span class="va">analysis</span><span class="op">$</span><span class="va">loghr_trt_ec</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/lapply.html">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unname.html">unname</a></span><span class="op">(</span><span class="va">primary_ate</span><span class="op">$</span><span class="va">loghr</span><span class="op">)</span>, <span class="co"># Remove term column</span>
+                                <span class="kw">function</span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="va">x</span><span class="op">[</span>, <span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/names.html">names</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">==</span> <span class="st">"term"</span><span class="op">]</span><span class="op">)</span>
+<span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">saveRDS</a></span><span class="op">(</span><span class="va">analysis</span>, <span class="st">"analysis-ate-trt-ec.rds"</span><span class="op">)</span></code></pre></div>
 </div>
   </div>
 
@@ -1856,7 +1881,7 @@ Multiple imputation
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
