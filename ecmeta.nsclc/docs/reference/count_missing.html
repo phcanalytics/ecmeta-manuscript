@@ -117,8 +117,8 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -136,7 +136,7 @@
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Count missing observations</h1>
-    <small class="dont-index">Source: <a href='https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/data-prep.R'><code>R/data-prep.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/data-prep.R'><code>R/data-prep.R</code></a></small>
     <div class="hidden name"><code>count_missing.Rd</code></div>
     </div>
 
@@ -144,7 +144,7 @@
     <p>Count missing observations for variables contained in a dataset.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>count_missing</span>(<span class='no'>data</span>, <span class='no'>vars</span>)</pre>
+    <pre class="usage"><span class='fu'>count_missing</span><span class='op'>(</span><span class='va'>data</span>, <span class='va'>vars</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -164,8 +164,8 @@ are used as labels for the variables.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An object of class <code>missing_counts</code> inheriting from <code><a href='https://dplyr.tidyverse.org/reference/reexports.html'>dplyr::tibble</a></code>
-with the following columns:</p><dl'>
+    <p>An object of class <code>missing_counts</code> inheriting from <code><a href='https://tibble.tidyverse.org/reference/tibble.html'>dplyr::tibble</a></code>
+with the following columns:</p><dl>
 <dt>label</dt><dd><p>The label for each variable in <code>vars</code>.</p></dd>
 <dt>source_type</dt><dd><p>Indicates whether the data is from the external control or the trial.</p></dd>
 <dt>analysis_num</dt><dd><p>An integer indicating the analyis number.</p></dd>
@@ -191,7 +191,7 @@ with the following columns:</p><dl'>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

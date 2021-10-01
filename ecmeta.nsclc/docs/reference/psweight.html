@@ -128,8 +128,8 @@ treated (in which case it is performed with replacement). Unadjusted
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -147,7 +147,7 @@ treated (in which case it is performed with replacement). Unadjusted
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Propensity score weighting</h1>
-    <small class="dont-index">Source: <a href='https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/psweight.R'><code>R/psweight.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/psweight.R'><code>R/psweight.R</code></a></small>
     <div class="hidden name"><code>psweight.Rd</code></div>
     </div>
 
@@ -166,20 +166,20 @@ treated (in which case it is performed with replacement). Unadjusted
 (i.e., unweighted) results are also always returned.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>psweight</span>(<span class='no'>object</span>, <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>psweight</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>...</span><span class='op'>)</span>
 
 <span class='co'># S3 method for ps</span>
-<span class='fu'>psweight</span>(
-  <span class='no'>object</span>,
-  <span class='kw'>methods</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"iptw_att"</span>, <span class='st'>"iptw_att_trim"</span>, <span class='st'>"match_nearest"</span>, <span class='st'>"match_nearest_caliper"</span>),
-  <span class='no'>...</span>
-)
+<span class='fu'>psweight</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  methods <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"iptw_att"</span>, <span class='st'>"iptw_att_trim"</span>, <span class='st'>"match_nearest"</span>, <span class='st'>"match_nearest_caliper"</span><span class='op'>)</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
 <span class='co'># S3 method for ps_mi</span>
-<span class='fu'>psweight</span>(<span class='no'>object</span>, <span class='no'>...</span>)
+<span class='fu'>psweight</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>...</span><span class='op'>)</span>
 
 <span class='co'># S3 method for list</span>
-<span class='fu'>psweight</span>(<span class='no'>object</span>, <span class='kw'>progress</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>outfile</span> <span class='kw'>=</span> <span class='st'>"psweight_out"</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>psweight</span><span class='op'>(</span><span class='va'>object</span>, progress <span class='op'>=</span> <span class='cn'>FALSE</span>, outfile <span class='op'>=</span> <span class='st'>"psweight_out"</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -214,7 +214,7 @@ is printed to the screen and save to the outfile.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <code><a href='https://dplyr.tidyverse.org/reference/reexports.html'>dplyr::tibble</a></code> is always returned that contains (i) each
+    <p>A <code><a href='https://tibble.tidyverse.org/reference/tibble.html'>dplyr::tibble</a></code> is always returned that contains (i) each
 variable included in <code>data</code>, (ii) the columns <code>ps</code> and <code>logit_ps</code> and for the
 propensity score and logit of the propensity score, respectively,
 (iii) the column <code>weight</code> for the weight generated, (iv) the column <code>method</code>
@@ -222,7 +222,7 @@ for the propensity score method used, (v) the column <code>exclude</code> denoti
 whether patients were excluded using either trimming or a caliper, and (vi)
 the column <code>method_type</code> for the type of propensity score method (weighting,
 matching, or none).</p>
-<p>The returned object always inherits from <code><a href='https://dplyr.tidyverse.org/reference/reexports.html'>dplyr::tibble</a></code> but the class
+<p>The returned object always inherits from <code><a href='https://tibble.tidyverse.org/reference/tibble.html'>dplyr::tibble</a></code> but the class
 depends on <code>object</code>. If <code>object</code> is of class <code>ps_fit</code>, then there is one row
 for each patient and the returned object is of class <code>psweight</code>.  If
 <code>object</code> is of class <code>ps_fit_mi</code>, then an additional column <code>imp</code> is added
@@ -245,7 +245,7 @@ an object of class <code>grouped_psweight</code> or <code>grouped_psweight_mi</c
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

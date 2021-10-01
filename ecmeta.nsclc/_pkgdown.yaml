@@ -7,10 +7,10 @@ development:
 
 repo:
   url:
-    home: https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/
-    source: https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/
-    issue: https://github.roche.com/incertid/ecmeta-manuscript/issues
-    user: https://github.roche.com
+    home: https://github.com/phcanalytics/ecmeta-manuscript/tree/main/ecmeta.nsclc/
+    source: https://github.com/phcanalytics/ecmeta-manuscript/tree/main/ecmeta.nsclc/
+    issue: https://github.com/phcanalytics/ecmeta-manuscript/issues
+    user: https://github.com/phcanalytics/ecmeta-manuscript
 
 reference:
   - title: "Data preparation and exploration"
@@ -80,8 +80,6 @@ navbar:
         href: articles/02-impute.html
       - text: "Propensity score estimation, weighting, and balance"
         href: articles/03-balance.html  
-      - text: "Propensity score estimation, weighting, and balance (Shiny app)"
-        href: https://connect.phcaa.science.roche.com/content/1102
       - text: "Treatment effect estimates: RCT experimental vs external control"
         href: articles/04-ate-trt-ec.html  
       - text: "Comparison of the internal and external control arms"

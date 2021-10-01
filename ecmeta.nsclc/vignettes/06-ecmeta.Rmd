@@ -187,7 +187,7 @@ The mean of the true HR is pushed upwards because internal control patients tend
 We can also plot posterior densities of the hazard ratios using the `bayesplot` package. 
 
 ```{r loghrNewMcmcArea, message = FALSE, fig.height = 6, fig.width = 7}
-loghr_seq <- seq(log(.5), log(1.5), length.out = 8)
+loghr_seq <- seq(-.8, .4, by = .2)
 loghr_labs <- paste0(
   "log(", 
   formatC(exp(loghr_seq), format = "f", digits = 2),
@@ -199,7 +199,7 @@ mcmc_areas(loghr_new, pars = c("trt_ic", "trt_ec"),
                    expand = expansion(add = .05)) +
   scale_x_continuous(breaks = loghr_seq, labels = loghr_labs) +
   xlab("Log hazard ratio") +
-  coord_cartesian(xlim = c(log(.45), log(1.6)))
+  coord_cartesian(xlim = c(min(loghr_seq), max(loghr_seq)))
 ```
 
 ```{r SaveLoghrNewMcmcArea, echo = FALSE}

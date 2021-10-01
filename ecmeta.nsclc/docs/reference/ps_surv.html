@@ -123,8 +123,8 @@ while map_ps_surv() iterates over multiple groups." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -142,7 +142,7 @@ while map_ps_surv() iterates over multiple groups." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Propensity score survival analysis</h1>
-    <small class="dont-index">Source: <a href='https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/ps_surv.R'><code>R/ps_surv.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/ps_surv.R'><code>R/ps_surv.R</code></a></small>
     <div class="hidden name"><code>ps_surv.Rd</code></div>
     </div>
 
@@ -156,18 +156,18 @@ ATEs with <code><a href='surv_ate.html'>surv_ate()</a></code>. <code>ps_surv()</
 while <code>map_ps_surv()</code> iterates over multiple groups.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>ps_surv</span>(<span class='no'>xdata</span>, <span class='kw'>formula</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>ydata</span>, <span class='no'>response</span>, <span class='kw'>id</span> <span class='kw'>=</span> <span class='st'>"patient_id"</span>, <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>ps_surv</span><span class='op'>(</span><span class='va'>xdata</span>, formula <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>ydata</span>, <span class='va'>response</span>, id <span class='op'>=</span> <span class='st'>"patient_id"</span>, <span class='va'>...</span><span class='op'>)</span>
 
-<span class='fu'>map_ps_surv</span>(
-  <span class='no'>xdata_list</span>,
-  <span class='kw'>formula</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>ydata_list</span>,
-  <span class='no'>response</span>,
-  <span class='kw'>id</span> <span class='kw'>=</span> <span class='st'>"patient_id"</span>,
-  <span class='no'>grp_id</span>,
-  <span class='kw'>integer_grp_id</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='no'>...</span>
-)</pre>
+<span class='fu'>map_ps_surv</span><span class='op'>(</span>
+  <span class='va'>xdata_list</span>,
+  formula <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>ydata_list</span>,
+  <span class='va'>response</span>,
+  id <span class='op'>=</span> <span class='st'>"patient_id"</span>,
+  <span class='va'>grp_id</span>,
+  integer_grp_id <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -208,7 +208,7 @@ response variables as described in <code><a href='surv_ate.html'>surv_ate()</a><
 
     <p><code>ps_surv()</code> returns an object of class <code>ps_surv</code> and <code>map_ps_surv()</code>
 returnes an object of class <code>grouped_ps_surv</code>. Both are lists containing
-the elements:</p><dl'>
+the elements:</p><dl>
 <dt>psfit</dt><dd><p>The propensity score model fit using <code><a href='fit_ps.html'>fit_ps()</a></code> or <code><a href='fit_ps.html'>fit_ps_mi()</a></code>.</p></dd>
 <dt>psweight</dt><dd><p>The propensity score weights returned by <code><a href='psweight.html'>psweight()</a></code>.</p></dd>
 <dt>ate</dt><dd><p>The average treatment effects returned by <code><a href='surv_ate.html'>surv_ate()</a></code>.</p></dd>
@@ -232,7 +232,7 @@ the elements:</p><dl'>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -118,8 +118,8 @@ or all of the categorical variables used in an imputation." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -137,7 +137,7 @@ or all of the categorical variables used in an imputation." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Observed vs imputed data</h1>
-    <small class="dont-index">Source: <a href='https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/impute.R'><code>R/impute.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/impute.R'><code>R/impute.R</code></a></small>
     <div class="hidden name"><code>observed_vs_imputed.Rd</code></div>
     </div>
 
@@ -146,12 +146,12 @@ or all of the categorical variables used in an imputation." />
 or all of the categorical variables used in an imputation.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>observed_vs_imputed</span>(
-  <span class='no'>object</span>,
-  <span class='no'>data</span>,
-  <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"categorical"</span>, <span class='st'>"continuous"</span>),
-  <span class='kw'>labels</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
+    <pre class="usage"><span class='fu'>observed_vs_imputed</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  <span class='va'>data</span>,
+  type <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='st'>"categorical"</span>, <span class='st'>"continuous"</span><span class='op'>)</span>,
+  labels <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -178,8 +178,8 @@ be assessed at the same time since they are different data types.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>An <code>observed_vs_imputed</code> object that inherits from <code><a href='https://dplyr.tidyverse.org/reference/reexports.html'>dplyr::tibble</a></code>
-containing the columns:</p><dl'>
+    <p>An <code>observed_vs_imputed</code> object that inherits from <code><a href='https://tibble.tidyverse.org/reference/tibble.html'>dplyr::tibble</a></code>
+containing the columns:</p><dl>
 <dt>value</dt><dd><p>The value of a particular variable.</p></dd>
 <dt>type</dt><dd><p>Either <code>"Observed"</code> or the imputation number (e.g., <code>"Imputation 1"</code>,
 <code>"Imputation 2"</code>, ...).</p></dd>
@@ -204,7 +204,7 @@ containing the columns:</p><dl'>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

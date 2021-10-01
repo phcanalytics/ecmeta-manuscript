@@ -124,8 +124,8 @@ using Rubin's rule when object contains weights from multiply imputed datasets."
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -143,7 +143,7 @@ using Rubin's rule when object contains weights from multiply imputed datasets."
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Average treatment effects for survival data</h1>
-    <small class="dont-index">Source: <a href='https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/surv_ate.R'><code>R/surv_ate.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/surv_ate.R'><code>R/surv_ate.R</code></a></small>
     <div class="hidden name"><code>surv_ate.Rd</code></div>
     </div>
 
@@ -158,25 +158,25 @@ the <code>cluster</code> option in <code>coxph()</code>. Estimates and confidenc
 using Rubin's rule when <code>object</code> contains weights from multiply imputed datasets.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>surv_ate</span>(
-  <span class='no'>object</span>,
-  <span class='no'>ydata</span>,
-  <span class='no'>response</span>,
-  <span class='no'>id</span>,
-  <span class='kw'>double_adjustment</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>ps_stratification</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>n_strata</span> <span class='kw'>=</span> <span class='fl'>10</span>
-)
+    <pre class="usage"><span class='fu'>surv_ate</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  <span class='va'>ydata</span>,
+  <span class='va'>response</span>,
+  <span class='va'>id</span>,
+  double_adjustment <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  ps_stratification <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  n_strata <span class='op'>=</span> <span class='fl'>10</span>
+<span class='op'>)</span>
 
-<span class='fu'>map_surv_ate</span>(
-  <span class='no'>object_list</span>,
-  <span class='no'>ydata_list</span>,
-  <span class='no'>response</span>,
-  <span class='no'>id</span>,
-  <span class='kw'>double_adjustment</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='no'>grp_id</span>,
-  <span class='kw'>integer_grp_id</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</pre>
+<span class='fu'>map_surv_ate</span><span class='op'>(</span>
+  <span class='va'>object_list</span>,
+  <span class='va'>ydata_list</span>,
+  <span class='va'>response</span>,
+  <span class='va'>id</span>,
+  double_adjustment <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  <span class='va'>grp_id</span>,
+  integer_grp_id <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -195,7 +195,7 @@ must contain the <code>id</code> variable.</p></td>
     <tr>
       <th>response</th>
       <td><p>A string containing the response for a survival model.
-This is the let hand side of a <code>~</code> operator.</p></td>
+This is the let hand side of a <code><a href='https://rdrr.io/r/base/tilde.html'>~</a></code> operator.</p></td>
     </tr>
     <tr>
       <th>id</th>
@@ -222,7 +222,7 @@ the propensity score.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <code><a href='https://dplyr.tidyverse.org/reference/reexports.html'>dplyr::tibble</a></code> with one row for each <code>method</code> in <code>object</code>.
+    <p>A <code><a href='https://tibble.tidyverse.org/reference/tibble.html'>dplyr::tibble</a></code> with one row for each <code>method</code> in <code>object</code>.
 Each row contains the columns: <code>method</code> (the propensity score method),
 <code>fit</code> (<code>tibble</code> containing the fitted Cox model),
 <code>loghr</code> (<code>tibble</code> containing estimates of the log hazard ratio), and <code>surv</code> (A
@@ -244,7 +244,7 @@ and control).</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

@@ -76,7 +76,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -97,9 +97,9 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Preparation and exploration of external control datasets</h1>
             
-            <h4 class="date">2021-09-30</h4>
+            <h4 class="date">2021-10-01</h4>
       
-      <small class="dont-index">Source: <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/vignettes/01-data-prep.Rmd"><code>vignettes/01-data-prep.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/vignettes/01-data-prep.Rmd"><code>vignettes/01-data-prep.Rmd</code></a></small>
       <div class="hidden name"><code>01-data-prep.Rmd</code></div>
 
     </div>
@@ -125,19 +125,19 @@
 <div id="data" class="section level1">
 <h1 class="hasAnchor">
 <a href="#data" class="anchor"></a>Data</h1>
-<p>The underlying dataset used for the analysis is built using the <a href="https://pages.github.roche.com/RWDScodeshare/ecdata/index.html"><code>ecdata</code></a> package. It consists of patients with advanced non-small cell lung cancer (NSCLC) and is documented <a href="https://pages.github.roche.com/RWDScodeshare/ecdata/reference/nsclc.html">here</a>. The <code>pins_nsclc()</code> pins the datasets locally using <code><a href="https://rdrr.io/pkg/pins/man/pin.html">pins::pin()</a></code> so that the dataset only needs to be built once. We preprocess the data into a format more suitable for propensity score modeling with the <code>preprocess()</code> function and filter to remove the comparator arm from the RCT in order to emulate a single arm trial.</p>
+<p>The underlying dataset used for the analysis is built using the <a href="https://pages.github.roche.com/RWDScodeshare/ecdata/index.html"><code>ecdata</code></a> package. It consists of patients with advanced non-small cell lung cancer (NSCLC) and is documented <a href="https://pages.github.roche.com/RWDScodeshare/ecdata/reference/nsclc.html">here</a>. The <code>pins_nsclc()</code> pins the datasets locally using <code><a href="https://rdrr.io/pkg/pins/man/pin.html">pins::pin()</a></code> so that the dataset only needs to be built once. We preprocess the data into a format more suitable for propensity score modeling with the <code><a href="../reference/preprocess.html">preprocess()</a></code> function and filter to remove the comparator arm from the RCT in order to emulate a single arm trial.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="fu">ecdata</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/ecdata/man/pin_disease.html">pin_nsclc</a></span><span class="op">(</span>update <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="co"># Pins dataset locally</span>
 <span class="va">nsclc</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/pins/man/pin_get.html">pin_get</a></span><span class="op">(</span><span class="st">"nsclc"</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">preprocess</span><span class="op">(</span><span class="op">)</span>
+  <span class="fu"><a href="../reference/preprocess.html">preprocess</a></span><span class="op">(</span><span class="op">)</span>
 <span class="va">ec_rct1</span> <span class="op">&lt;-</span> <span class="va">nsclc</span> <span class="op">%&gt;%</span> <span class="co"># Hypothetical single arm trial with external control</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">source_type</span> <span class="op">==</span> <span class="st">"RCT"</span> <span class="op">&amp;</span> <span class="va">arm_type</span> <span class="op">==</span> <span class="st">"Comparator"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p>All pairwise comparisons that will be used in the analyses are displayed in the table below.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu">new_analysis</span><span class="op">(</span><span class="va">nsclc</span><span class="op">)</span>  
+<code class="sourceCode R"><span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/new_analysis.html">new_analysis</a></span><span class="op">(</span><span class="va">nsclc</span><span class="op">)</span>  
 
 <span class="va">analysis</span> <span class="op">%&gt;%</span>
- <span class="fu">html_table</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
+ <span class="fu"><a href="../reference/html_table.html">html_table</a></span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
  <span class="fu"><a href="https://rdrr.io/pkg/kableExtra/man/scroll_box.html">scroll_box</a></span><span class="op">(</span>width <span class="op">=</span> <span class="st">"100%"</span><span class="op">)</span></code></pre></div>
 <div style="border: 1px solid #ddd; padding: 5px; overflow-x: scroll; width:100%; ">
 <table class="table table">
@@ -607,7 +607,7 @@ Atezolizumab + Carboplatin or Cisplatin + Pemetrexed
 <a href="#missing-data" class="anchor"></a>Missing data</h1>
 <p>We count the number of missing values of each potential covariate for each pairwise analysis. Both the number of missing and the proportion missing (of the total number of observations with each arm) are plotted.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">n_missing_df</span> <span class="op">&lt;-</span> <span class="fu">count_missing</span><span class="op">(</span><span class="va">ec_rct1</span>, vars <span class="op">=</span> <span class="fu">get_ps_vars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="va">n_missing_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/count_missing.html">count_missing</a></span><span class="op">(</span><span class="va">ec_rct1</span>, vars <span class="op">=</span> <span class="fu">get_ps_vars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <div id="proportion-missing" class="section level2">
 <h2 class="hasAnchor">
 <a href="#proportion-missing" class="anchor"></a>Proportion missing</h2>
@@ -636,49 +636,49 @@ Atezolizumab + Carboplatin or Cisplatin + Pemetrexed
 <h2 class="hasAnchor">
 <a href="#age" class="anchor"></a>Age</h2>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">plot_density</span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"age"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_density.html">plot_density</a></span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"age"</span><span class="op">)</span></code></pre></div>
 <p><img src="01-data-prep_files/figure-html/ageDensity-1.png" width="960"></p>
 </div>
 <div id="days-since-dx" class="section level2">
 <h2 class="hasAnchor">
 <a href="#days-since-dx" class="anchor"></a>Days since Dx</h2>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">plot_density</span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"days_since_dx"</span>, xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_density.html">plot_density</a></span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"days_since_dx"</span>, xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1000</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 <p><img src="01-data-prep_files/figure-html/daysSinceDxDensity-1.png" width="960"></p>
 </div>
 <div id="race" class="section level2">
 <h2 class="hasAnchor">
 <a href="#race" class="anchor"></a>Race</h2>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">plot_bar</span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"race_grouped"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_bar.html">plot_bar</a></span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"race_grouped"</span><span class="op">)</span></code></pre></div>
 <p><img src="01-data-prep_files/figure-html/raceBarplot-1.png" width="960"></p>
 </div>
 <div id="sex" class="section level2">
 <h2 class="hasAnchor">
 <a href="#sex" class="anchor"></a>Sex</h2>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">plot_bar</span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"sex"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_bar.html">plot_bar</a></span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"sex"</span><span class="op">)</span></code></pre></div>
 <p><img src="01-data-prep_files/figure-html/sexBarplot-1.png" width="960"></p>
 </div>
 <div id="smoker" class="section level2">
 <h2 class="hasAnchor">
 <a href="#smoker" class="anchor"></a>Smoker</h2>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">plot_bar</span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"smoker_grouped"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_bar.html">plot_bar</a></span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"smoker_grouped"</span><span class="op">)</span></code></pre></div>
 <p><img src="01-data-prep_files/figure-html/smokerBarplot-1.png" width="960"></p>
 </div>
 <div id="histology" class="section level2">
 <h2 class="hasAnchor">
 <a href="#histology" class="anchor"></a>Histology</h2>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">plot_bar</span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"histology"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_bar.html">plot_bar</a></span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"histology"</span><span class="op">)</span></code></pre></div>
 <p><img src="01-data-prep_files/figure-html/histologyBarplot-1.png" width="960"></p>
 </div>
 <div id="cancer-stage" class="section level2">
 <h2 class="hasAnchor">
 <a href="#cancer-stage" class="anchor"></a>Cancer stage</h2>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">plot_bar</span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"stage_grouped"</span><span class="op">)</span></code></pre></div>
+<code class="sourceCode R"><span class="fu"><a href="../reference/plot_bar.html">plot_bar</a></span><span class="op">(</span><span class="va">ec_rct1</span>, var <span class="op">=</span> <span class="st">"stage_grouped"</span><span class="op">)</span></code></pre></div>
 <p><img src="01-data-prep_files/figure-html/stageBarplot-1.png" width="960"></p>
 </div>
 </div>
@@ -687,10 +687,10 @@ Atezolizumab + Carboplatin or Cisplatin + Pemetrexed
 <a href="#categorical-variables-with-small-sample-sizes" class="anchor"></a>Categorical variables with small sample sizes</h1>
 <p>The plots above suggest that some categories of the categorical variables might still have small sample sizes even after preprocessing. Categories of categorical variables with fewer than 10 observations are shown in the table below.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu">count_by</span><span class="op">(</span><span class="va">ec_rct1</span>, vars <span class="op">=</span> <span class="fu">get_ps_catvars</span><span class="op">(</span><span class="op">)</span>, 
+<code class="sourceCode R"><span class="fu"><a href="../reference/count_by.html">count_by</a></span><span class="op">(</span><span class="va">ec_rct1</span>, vars <span class="op">=</span> <span class="fu">get_ps_catvars</span><span class="op">(</span><span class="op">)</span>, 
          by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html">c</a></span><span class="op">(</span><span class="st">"analysis_num"</span>, <span class="st">"source_type"</span><span class="op">)</span>,
          max_n <span class="op">=</span> <span class="fl">9</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">html_table</span><span class="op">(</span><span class="op">)</span></code></pre></div>
+  <span class="fu"><a href="../reference/html_table.html">html_table</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <table class="table table table-striped table-responsive">
 <thead><tr>
 <th style="text-align:right;">

@@ -121,8 +121,8 @@ intervals using html_table()." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -140,7 +140,7 @@ intervals using html_table()." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Benchmark hazard ratios</h1>
-    <small class="dont-index">Source: <a href='https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/benchmark_hazard_ratios.R'><code>R/benchmark_hazard_ratios.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/benchmark_hazard_ratios.R'><code>R/benchmark_hazard_ratios.R</code></a></small>
     <div class="hidden name"><code>benchmark_hazard_ratios.Rd</code></div>
     </div>
 
@@ -152,25 +152,25 @@ using <code><a href='https://ggplot2.tidyverse.org/reference/autoplot.html'>auto
 intervals using <code><a href='html_table.html'>html_table()</a></code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>benchmark_hazard_ratios</span>(
-  <span class='no'>object</span>,
-  <span class='kw'>benchmarks</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>benchmark_estimate</span> <span class='kw'>=</span> <span class='st'>"estimate"</span>,
-  <span class='kw'>benchmark_lower</span> <span class='kw'>=</span> <span class='st'>"lower"</span>,
-  <span class='kw'>benchmark_upper</span> <span class='kw'>=</span> <span class='st'>"upper"</span>
-)
+    <pre class="usage"><span class='fu'>benchmark_hazard_ratios</span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  benchmarks <span class='op'>=</span> <span class='cn'>NULL</span>,
+  benchmark_estimate <span class='op'>=</span> <span class='st'>"estimate"</span>,
+  benchmark_lower <span class='op'>=</span> <span class='st'>"lower"</span>,
+  benchmark_upper <span class='op'>=</span> <span class='st'>"upper"</span>
+<span class='op'>)</span>
 
 <span class='co'># S3 method for benchmarked_hazard_ratios</span>
-<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/autoplot.html'>autoplot</a></span>(
-  <span class='no'>object</span>,
-  <span class='kw'>xlab</span> <span class='kw'>=</span> <span class='st'>"Benchmark hazard ratio"</span>,
-  <span class='kw'>ylab</span> <span class='kw'>=</span> <span class='st'>"Estimated hazard ratio"</span>,
-  <span class='kw'>scale_breaks</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='fl'>0.4</span>, <span class='fl'>2</span>, <span class='fl'>0.2</span>),
-  <span class='no'>...</span>
-)
+<span class='fu'><a href='https://ggplot2.tidyverse.org/reference/autoplot.html'>autoplot</a></span><span class='op'>(</span>
+  <span class='va'>object</span>,
+  xlab <span class='op'>=</span> <span class='st'>"Benchmark hazard ratio"</span>,
+  ylab <span class='op'>=</span> <span class='st'>"Estimated hazard ratio"</span>,
+  scale_breaks <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span><span class='fl'>0.4</span>, <span class='fl'>2</span>, <span class='fl'>0.2</span><span class='op'>)</span>,
+  <span class='va'>...</span>
+<span class='op'>)</span>
 
 <span class='co'># S3 method for benchmarked_hazard_ratios</span>
-<span class='fu'><a href='html_table.html'>html_table</a></span>(<span class='no'>x</span>, <span class='no'>...</span>)</pre>
+<span class='fu'><a href='html_table.html'>html_table</a></span><span class='op'>(</span><span class='va'>x</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -203,7 +203,7 @@ estimate.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A <code>hazard_ratio</code> object that inherits from <code><a href='https://dplyr.tidyverse.org/reference/reexports.html'>dplyr::tibble</a></code>.</p>
+    <p>A <code>hazard_ratio</code> object that inherits from <code><a href='https://tibble.tidyverse.org/reference/tibble.html'>dplyr::tibble</a></code>.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -220,7 +220,7 @@ estimate.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

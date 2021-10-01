@@ -118,8 +118,8 @@ of a stratification variable (typically treatment vs. control)." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -137,7 +137,7 @@ of a stratification variable (typically treatment vs. control)." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Marginal survival curves</h1>
-    <small class="dont-index">Source: <a href='https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/marginal_survival.R'><code>R/marginal_survival.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/marginal_survival.R'><code>R/marginal_survival.R</code></a></small>
     <div class="hidden name"><code>marginal_survival.Rd</code></div>
     </div>
 
@@ -146,16 +146,16 @@ of a stratification variable (typically treatment vs. control)." />
 of a stratification variable (typically treatment vs. control).</p>
     </div>
 
-    <pre class="usage"><span class='fu'>marginal_survival</span>(<span class='no'>object</span>, <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>marginal_survival</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>...</span><span class='op'>)</span>
 
 <span class='co'># S3 method for psweight</span>
-<span class='fu'>marginal_survival</span>(<span class='no'>object</span>, <span class='no'>formula</span>, <span class='kw'>times</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)
+<span class='fu'>marginal_survival</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>formula</span>, times <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span>
 
 <span class='co'># S3 method for psweight_mi</span>
-<span class='fu'>marginal_survival</span>(<span class='no'>object</span>, <span class='no'>formula</span>, <span class='kw'>times</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)
+<span class='fu'>marginal_survival</span><span class='op'>(</span><span class='va'>object</span>, <span class='va'>formula</span>, times <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span>
 
 <span class='co'># S3 method for survfit</span>
-<span class='fu'>marginal_survival</span>(<span class='no'>object</span>, <span class='kw'>times</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>marginal_survival</span><span class='op'>(</span><span class='va'>object</span>, times <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -182,8 +182,8 @@ hand side of the formula should have a single <code>strata</code> term.</p></td>
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>An object of class <code>marginal_survival</code>, which is a
-<code><a href='https://dplyr.tidyverse.org/reference/reexports.html'>dplyr::tibble</a></code> containing the following columns:</p>
-<dl'>
+<code><a href='https://tibble.tidyverse.org/reference/tibble.html'>dplyr::tibble</a></code> containing the following columns:</p>
+<dl>
 <dt>{<code>strata</code>}</dt><dd><p>The name of the stratification variable. This will be the same
 as the name of the variable supplied by the user.</p></dd>
 <dt><code>time</code></dt><dd><p>The time at which survival was evaluated.</p></dd>
@@ -207,7 +207,7 @@ as the name of the variable supplied by the user.</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

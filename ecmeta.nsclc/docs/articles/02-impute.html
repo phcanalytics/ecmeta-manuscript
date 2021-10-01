@@ -76,7 +76,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
     <span class="fab fa-github fa-lg"></span>
      
   </a>
@@ -96,9 +96,9 @@
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Multiple imputation of baseline covariates</h1>
             
-            <h4 class="date">2021-09-30</h4>
+            <h4 class="date">2021-10-01</h4>
       
-      <small class="dont-index">Source: <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/vignettes/02-impute.Rmd"><code>vignettes/02-impute.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/vignettes/02-impute.Rmd"><code>vignettes/02-impute.Rmd</code></a></small>
       <div class="hidden name"><code>02-impute.Rmd</code></div>
 
     </div>
@@ -128,7 +128,7 @@
 <p>We load the data in the same manner as in <code><a href="../articles/01-data-prep.html">vignette("01-data-prep")</a></code>.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ec_rct1</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/pins/man/pin_get.html">pin_get</a></span><span class="op">(</span><span class="st">"nsclc"</span><span class="op">)</span> <span class="op">%&gt;%</span>
-  <span class="fu">preprocess</span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
+  <span class="fu"><a href="../reference/preprocess.html">preprocess</a></span><span class="op">(</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html">filter</a></span><span class="op">(</span><span class="op">!</span><span class="op">(</span><span class="va">source_type</span> <span class="op">==</span> <span class="st">"RCT"</span> <span class="op">&amp;</span> <span class="va">arm_type</span> <span class="op">==</span> <span class="st">"Comparator"</span><span class="op">)</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="multiple-imputation" class="section level1">
@@ -136,9 +136,9 @@
 <a href="#multiple-imputation" class="anchor"></a>Multiple imputation</h1>
 <p>Model formulas for imputation are based on the variables included in the propensity score models (see <code><a href="../articles/03-balance.html">vignette("03-balance")</a></code> for a more detailed look at the propensity score models). We interact the data source with the propensity score variables so that there is effectively a separate imputation model for the trial and external control patients.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="va">ps_form</span> <span class="op">&lt;-</span> <span class="fu">get_ps_formula</span><span class="op">(</span>splines <span class="op">=</span> <span class="cn">FALSE</span>, interaction <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
+<code class="sourceCode R"><span class="va">ps_form</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ps_formula.html">get_ps_formula</a></span><span class="op">(</span>splines <span class="op">=</span> <span class="cn">FALSE</span>, interaction <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 <span class="va">analysis</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html">readRDS</a></span><span class="op">(</span><span class="st">"analysis-data-prep.rds"</span><span class="op">)</span> <span class="op">%&gt;%</span> 
-  <span class="fu">add_impute_formula</span><span class="op">(</span><span class="va">ps_form</span>, interaction <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
+  <span class="fu"><a href="../reference/impute_formula.html">add_impute_formula</a></span><span class="op">(</span><span class="va">ps_form</span>, interaction <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></code></pre></div>
 <p>The imputation model is estimated using the <code><a href="https://rdrr.io/pkg/Hmisc/man/aregImpute.html">Hmisc::aregImpute()</a></code> function. Continuous predictors of target variables are transformed with restricted cubic splines (default of 3 internal knots). Predictive mean matching is used for imputation; by default, the imputation is performed by selecting the value of the target variable from the candidate donor that is the closest match. Bootstrapping is used to perform multiple imputation.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">ec_rct1_list</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/group_split.html">group_split</a></span><span class="op">(</span><span class="va">ec_rct1</span>, <span class="va">analysis_num</span><span class="op">)</span>
@@ -147,11 +147,11 @@
   <span class="fu"><a href="https://rdrr.io/pkg/Hmisc/man/aregImpute.html">aregImpute</a></span><span class="op">(</span><span class="va">y</span>, data <span class="op">=</span> <span class="va">x</span>, n.impute <span class="op">=</span> <span class="fl">5</span>, nk <span class="op">=</span> <span class="fl">3</span>, match <span class="op">=</span> <span class="st">"closest"</span>, 
              tlinear <span class="op">=</span> <span class="cn">TRUE</span>, pr <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
-<p>Missing values are then multiply imputed with <code>multi_impute()</code> which generates <span class="math inline">\(M\)</span> new datasets with missing values imputed by leveraging the <code><a href="https://rdrr.io/pkg/Hmisc/man/transcan.html">Hmisc::impute.transcan()</a></code> function. The <span class="math inline">\(M\)</span> complete datasets are stacked with a column <code>imp</code> identifying an imputation number.</p>
+<p>Missing values are then multiply imputed with <code><a href="../reference/multi_impute.html">multi_impute()</a></code> which generates <span class="math inline">\(M\)</span> new datasets with missing values imputed by leveraging the <code><a href="https://rdrr.io/pkg/Hmisc/man/transcan.html">Hmisc::impute.transcan()</a></code> function. The <span class="math inline">\(M\)</span> complete datasets are stacked with a column <code>imp</code> identifying an imputation number.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">analysis</span><span class="op">$</span><span class="va">impute_xdata</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map2.html">map2</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">impute_model</span>, <span class="va">ec_rct1_list</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
   <span class="va">y</span><span class="op">$</span><span class="va">race_grouped</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/droplevels.html">droplevels</a></span><span class="op">(</span><span class="va">y</span><span class="op">$</span><span class="va">race_grouped</span><span class="op">)</span>
-  <span class="fu">multi_impute</span><span class="op">(</span><span class="va">x</span>, data <span class="op">=</span> <span class="va">y</span><span class="op">)</span>
+  <span class="fu"><a href="../reference/multi_impute.html">multi_impute</a></span><span class="op">(</span><span class="va">x</span>, data <span class="op">=</span> <span class="va">y</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="imputation-diagnostics" class="section level1">
@@ -166,7 +166,7 @@
 <a href="#categorical-covariates" class="anchor"></a>Categorical covariates</h3>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">obsimp_cat</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map2.html">map2</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">impute_model</span>,  <span class="va">analysis</span><span class="op">$</span><span class="va">impute_xdata</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu">observed_vs_imputed</span><span class="op">(</span><span class="va">x</span>, data <span class="op">=</span> <span class="va">y</span>, type <span class="op">=</span> <span class="st">"categorical"</span>, labels <span class="op">=</span> <span class="fu">get_ps_vars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+  <span class="fu"><a href="../reference/observed_vs_imputed.html">observed_vs_imputed</a></span><span class="op">(</span><span class="va">x</span>, data <span class="op">=</span> <span class="va">y</span>, type <span class="op">=</span> <span class="st">"categorical"</span>, labels <span class="op">=</span> <span class="fu">get_ps_vars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html">setNames</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">analysis_num</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span><span class="op">(</span>.id <span class="op">=</span> <span class="st">"grp"</span><span class="op">)</span>
@@ -179,7 +179,7 @@
 <a href="#continuous-covariates" class="anchor"></a>Continuous covariates</h3>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">obsimp_cont</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map2.html">map2</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">impute_model</span>,  <span class="va">analysis</span><span class="op">$</span><span class="va">impute_xdata</span>, <span class="kw">function</span> <span class="op">(</span><span class="va">x</span>, <span class="va">y</span><span class="op">)</span> <span class="op">{</span>
-  <span class="fu">observed_vs_imputed</span><span class="op">(</span><span class="va">x</span>, data <span class="op">=</span> <span class="va">y</span>, type <span class="op">=</span> <span class="st">"continuous"</span>, labels <span class="op">=</span> <span class="fu">get_ps_vars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
+  <span class="fu"><a href="../reference/observed_vs_imputed.html">observed_vs_imputed</a></span><span class="op">(</span><span class="va">x</span>, data <span class="op">=</span> <span class="va">y</span>, type <span class="op">=</span> <span class="st">"continuous"</span>, labels <span class="op">=</span> <span class="fu">get_ps_vars</span><span class="op">(</span><span class="op">)</span><span class="op">)</span>
 <span class="op">}</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://rdrr.io/r/stats/setNames.html">setNames</a></span><span class="op">(</span><span class="va">analysis</span><span class="op">$</span><span class="va">analysis_num</span><span class="op">)</span> <span class="op">%&gt;%</span>
   <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind.html">bind_rows</a></span><span class="op">(</span>.id <span class="op">=</span> <span class="st">"grp"</span><span class="op">)</span>

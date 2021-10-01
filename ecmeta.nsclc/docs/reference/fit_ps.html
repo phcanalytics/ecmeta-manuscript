@@ -119,8 +119,8 @@ m multiply imputed datasets." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+  <a href="https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/">
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -138,7 +138,7 @@ m multiply imputed datasets." />
   <div class="col-md-9 contents">
     <div class="page-header">
     <h1>Fit propensity score model</h1>
-    <small class="dont-index">Source: <a href='https://github.roche.com/incertid/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/fit_ps.R'><code>R/fit_ps.R</code></a></small>
+    <small class="dont-index">Source: <a href='https://github.com/phcanalytics/ecmeta-manuscript/tree/master/ecmeta.nsclc/R/fit_ps.R'><code>R/fit_ps.R</code></a></small>
     <div class="hidden name"><code>fit_ps.Rd</code></div>
     </div>
 
@@ -148,9 +148,9 @@ a model on a single dataset and <code>fit_ps_mi()</code> fits a model on each of
 <code>m</code> multiply imputed datasets.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>fit_ps</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='kw'>engine</span> <span class='kw'>=</span> <span class='st'>"glm"</span>, <span class='no'>...</span>)
+    <pre class="usage"><span class='fu'>fit_ps</span><span class='op'>(</span><span class='va'>formula</span>, <span class='va'>data</span>, engine <span class='op'>=</span> <span class='st'>"glm"</span>, <span class='va'>...</span><span class='op'>)</span>
 
-<span class='fu'>fit_ps_mi</span>(<span class='no'>formula</span>, <span class='no'>data</span>, <span class='kw'>engine</span> <span class='kw'>=</span> <span class='st'>"glm"</span>, <span class='no'>...</span>)</pre>
+<span class='fu'>fit_ps_mi</span><span class='op'>(</span><span class='va'>formula</span>, <span class='va'>data</span>, engine <span class='op'>=</span> <span class='st'>"glm"</span>, <span class='va'>...</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -158,7 +158,7 @@ a model on a single dataset and <code>fit_ps_mi()</code> fits a model on each of
     <tr>
       <th>formula</th>
       <td><p>An object of class <code><a href='https://rdrr.io/r/stats/formula.html'>formula</a></code> with the treatment variable to the
-left of the <code>~</code> operator and the model terms on the right.</p></td>
+left of the <code><a href='https://rdrr.io/r/base/tilde.html'>~</a></code> operator and the model terms on the right.</p></td>
     </tr>
     <tr>
       <th>data</th>
@@ -198,7 +198,7 @@ which is a list of <code>fit_ps</code> objects.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
